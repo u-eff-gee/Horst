@@ -1,5 +1,6 @@
 #include <TROOT.h>
 #include <TApplication.h>
+#include <TF1.h>
 
 #include <iostream>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 #include "Config.h"
 #include "Fitter.h"
 #include "InputFileReader.h"
+#include "FitFunction.h"
 
 using std::cout;
 using std::endl;
@@ -73,13 +75,31 @@ int main(int argc, char* argv[]){
 	inputFileReader.readMatrix(response_matrix, arguments.matrixfile);
 	response_matrix.Rebin2D(BINNING, BINNING);
 
+	TH1F start_params("start_params", "Start_Parameters", NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F unfolded_spectrum_topdown("unfolded_spectrum_topdown", "Unfolded_Spectrum_TopDown", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	fitter.topdown(spectrum, response_matrix, start_params, unfolded_spectrum_topdown, arguments.left/BINNING, arguments.right/BINNING);
+
 	TH1F params("params", "Parameters", NBINS/BINNING, 0., (Double_t) NBINS - 1);
-	TH1F unfolded_spectrum("unfolded_spectrum", "Unfolded_Spectrum", NBINS/BINNING, 0., (Double_t) NBINS - 1);
-	fitter.topdown(spectrum, response_matrix, params, unfolded_spectrum, arguments.left/BINNING, arguments.right/BINNING);
+
+	for(Int_t i = 0; i < start_params.GetNbinsX(); ++i)
+		params.SetBinContent(i, start_params.GetBinContent(i));
+
+	FitFunction fitFunction(response_matrix, (Int_t) arguments.left/BINNING, (Int_t) arguments.right/BINNING);
+	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, NBINS/BINNING);
+
+	for(Int_t i = 0; i < start_params.GetNbinsX(); ++i){
+		if(i < arguments.left/BINNING || i > arguments.right/BINNING){
+			fitf.FixParameter(i, 0.);
+		}
+		fitf.SetParameter(i, start_params.GetBinContent(i));
+	}
+
+	cout << "> Fitting spectrum ..." << endl;
+	spectrum.Fit("fitf");
 
 	//response_matrix.Draw();
 	//spectrum.Draw();
 	//unfolded_spectrum.Draw("same");
-	params.Draw("same");
+	//start_params.Draw("same");
 	app->Run();
 }
