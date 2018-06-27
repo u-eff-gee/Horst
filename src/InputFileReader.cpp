@@ -84,3 +84,35 @@ void InputFileReader::writeMatrix(TH2F &response_matrix, TString outputfilename)
 
 	cout << "> Wrote matrix to file " << outputfilename << endl;
 }
+
+void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile){
+
+	cout << "> Reading matrix file " << matrixfile << " ..." << endl;
+
+	TFile *inputFile = new TFile(matrixfile);
+	TH2F *rema = (TH2F*) gDirectory->Get("rema");
+	for(Int_t i = 0; i < NBINS; ++i){
+		for(Int_t j = 0; j < NBINS; ++j){
+			response_matrix.SetBinContent(i, j, rema->GetBinContent(i, j));
+		}
+	}
+
+	inputFile->Close();
+}
+
+void InputFileReader::readTxtSpectrum(TH1F &spectrum, const TString spectrumfile){
+	
+	cout << "> Reading spectrum file " << spectrumfile << " ..." << endl;
+
+	ifstream file;	
+	file.open(spectrumfile);
+	string line = "";
+	Int_t index = 0;
+
+	if(file.is_open()){
+		while(getline(file, line)){
+			spectrum.SetBinContent(index, atof(line.c_str()));
+			++index;
+		}
+	}
+}

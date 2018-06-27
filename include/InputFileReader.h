@@ -18,7 +18,9 @@ public:
 	void fillMatrix(const vector<TString> &filenames, const vector<Double_t> &energies, const TString histname, TH2F &response_matrix);
 
 	void writeMatrix(TH2F &response_matrix, TString outputfilename) const;
+	void readMatrix(TH2F &response_matrix, const TString matrixfile);
 
+	void readTxtSpectrum(TH1F &spectrum, const TString spectrumfile);
 };
 
 #endif

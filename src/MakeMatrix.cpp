@@ -1,5 +1,4 @@
 #include <TROOT.h>
-#include <TMatrixD.h>
 
 #include <iostream>
 #include <stdlib.h>
@@ -20,7 +19,7 @@ struct Arguments{
 	TString outputfile = "";
 };
 
-static char doc[] = "horst, HIGS original reconstruction spectrum tool";
+static char doc[] = "makematrix, Create a response matrix from a series of simulations of the detector response";
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
