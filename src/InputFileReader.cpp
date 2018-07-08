@@ -47,7 +47,7 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 	Int_t n_energies = (Int_t) energies.size();
 	Int_t simulation_shift = 0;
 
-	for(Int_t i = 0; i < (Int_t) NBINS; ++i){
+	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
 		// Find best simulation for energy bin
 		min_dist = (Double_t) NBINS;
 		best_simulation = 0;
@@ -66,7 +66,7 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 		TFile *inputFile = new TFile(filenames[(long unsigned int) best_simulation]);
 		TH1F *hist = (TH1F*) gDirectory->Get(histname);
 		simulation_shift = (Int_t) min_dist;	
-		for(Int_t j = 0; j < (Int_t) NBINS; ++j){
+		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
 			if(j + simulation_shift < (Int_t) NBINS && (j + simulation_shift) >= 0){
 				response_matrix.SetBinContent(i, j, hist->GetBinContent(j + simulation_shift));
 			}
@@ -91,8 +91,8 @@ void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile
 
 	TFile *inputFile = new TFile(matrixfile);
 	TH2F *rema = (TH2F*) gDirectory->Get("rema");
-	for(Int_t i = 0; i < NBINS; ++i){
-		for(Int_t j = 0; j < NBINS; ++j){
+	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
+		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
 			response_matrix.SetBinContent(i, j, rema->GetBinContent(i, j));
 		}
 	}
@@ -107,7 +107,7 @@ void InputFileReader::readTxtSpectrum(TH1F &spectrum, const TString spectrumfile
 	ifstream file;	
 	file.open(spectrumfile);
 	string line = "";
-	Int_t index = 0;
+	Int_t index = 1;
 
 	if(file.is_open()){
 		while(getline(file, line)){

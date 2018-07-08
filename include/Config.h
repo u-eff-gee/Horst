@@ -1,2 +1,2 @@
-const unsigned int NBINS = 10000;
-const unsigned int BINNING = 10;
+const unsigned int NBINS = 12000;
+const unsigned int BINNING = 20;

@@ -5,7 +5,7 @@
 
 class FitFunction{
 	public:
-		FitFunction(TH2F &rema, Int_t binstart, Int_t binstop): 
+		FitFunction(const TH2F &rema, Int_t binstart, Int_t binstop): 
 			response_matrix(rema),
 			bin_start(binstart),
 			bin_stop(binstop)
