@@ -3,16 +3,17 @@
 #include <TF1.h>
 #include <TStyle.h>
 #include <TFile.h>
+#include <TCanvas.h>
 
 #include <iostream>
 #include <stdlib.h>
 #include <sstream>
 #include <argp.h>
+#include <time.h>
 
 #include "Config.h"
 #include "Fitter.h"
 #include "InputFileReader.h"
-#include "FitFunction.h"
 
 using std::cout;
 using std::endl;
@@ -24,6 +25,8 @@ struct Arguments{
 	TString outputfile = "output.root";
 	UInt_t left = 0;
 	UInt_t right = NBINS;
+	Bool_t interactive_mode = false;
+	Bool_t plot = false;
 };
 
 static char doc[] = "horst, HIGS original reconstruction spectrum tool";
@@ -34,6 +37,8 @@ static struct argp_option options[] = {
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"left", 'l', "LEFT", 0, "Left limit of fit range", 0},
 	{"right", 'r', "RIGHT", 0, "Right limit of fit range", 0},
+	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
+	{"plot", 'p', 0, 0, "Plot results in pdf files (switched off by default)", 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
 
@@ -46,9 +51,15 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'm': arguments->matrixfile= arg; break;
 		case 'l': arguments->left= (UInt_t) atoi(arg); break;
 		case 'r': arguments->right= (UInt_t) atoi(arg); break;
+		case 'i': arguments->interactive_mode= true; break;
+		case 'p': arguments->plot = true; break;
 		case ARGP_KEY_END:
 			if(state->arg_num == 0){
 				argp_usage(state);
+			}
+			if(arguments->matrixfile == ""){
+				cout << "Error: No matrix file given. Aborting ..." << endl;
+				abort();
 			}
 			break;
 		default: return ARGP_ERR_UNKNOWN;
@@ -60,6 +71,9 @@ static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0};
 
 int main(int argc, char* argv[]){
 
+	time_t start, stop;
+	time(&start);
+
 	/************ Read command-line arguments  *************/
 
 	Arguments arguments;
@@ -68,13 +82,15 @@ int main(int argc, char* argv[]){
 	/************ Start ROOT application *************/
 
 	TApplication *app;
-	app = new TApplication("Response_Fit", &argc, argv);
+	if(arguments.interactive_mode){
+		app = new TApplication("Response_Fit", &argc, argv);
+	}
 
 	/************ Read and rebin spectrum and response matrix *************/
 
 	InputFileReader inputFileReader;
 
-	TH1F spectrum("spec", "Spectrum", NBINS, 0., (Double_t) NBINS - 1);
+	TH1F spectrum("spec", "Original Spectrum", NBINS, 0., (Double_t) NBINS - 1);
 	inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
 	spectrum.Rebin(BINNING);
 
@@ -90,26 +106,12 @@ int main(int argc, char* argv[]){
 	Fitter fitter;
 	fitter.topdown(spectrum, response_matrix, start_params, unfolded_spectrum_topdown, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
 
-	TH1F topdown_fit("topdown_fit", "TopDown_Fit", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
-		topdown_fit.SetBinContent(i, start_params.GetBinContent(i)*response_matrix.GetBinContent(i, i));
-		if(start_params.GetBinContent(i) <= 0.){
-			start_params.SetBinContent(i, 0.);
-		}
-	}
+	TH1F topdown_FEP("topdown_FEP", "TopDown FEP", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	fitter.fittedFEP(start_params, response_matrix, topdown_FEP);
+	TH1F topdown_fit("topdown_fit", "TopDown Fit", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	fitter.fittedSpectrum(start_params, response_matrix, topdown_fit);
 
-	TH1F fit_function_test("fit_function_test", "FF_Test", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	vector<Double_t> fit_params(NBINS/BINNING);
-	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
-		fit_params[i] = start_params.GetBinContent(i);
-	}
-	FitFunction fitFunction(response_matrix, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
-	Double_t bin = 0.;
-	for(Int_t i = 1; i <= (Int_t) NBINS/BINNING; ++i){
-		bin = (Double_t) i*BINNING;
-		fit_function_test.SetBinContent(i, fitFunction(&bin, &fit_params[0]));
-	}
-	
+	fitter.remove_negative(start_params);
 
 	/************ Fit *************/
 
@@ -118,42 +120,52 @@ int main(int argc, char* argv[]){
 
 	fitter.fit(spectrum, response_matrix, start_params, params, fit, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
 
-	TH1F chi2_fit("chi2_fit", "Chi2_Fit", NBINS/BINNING, 0., (Double_t) NBINS - 1); for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
-		chi2_fit.SetBinContent(i, params.GetBinContent(i)*response_matrix.GetBinContent(i, i));
-	}
+	TH1F chi2_FEP("chi2_FEP", "Chi2 FEP", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	fitter.fittedFEP(params, response_matrix, chi2_FEP);
+	TH1F chi2_fit("chi2_fit", "Chi2 Fit", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	fitter.fittedSpectrum(params, response_matrix, chi2_fit);
 
 	/************ Plot results *************/
 
-	//response_matrix.Draw();
-	gStyle->SetHistLineColor(kBlack);
-	spectrum.UseCurrentStyle();
+	TCanvas c1("c1", "Plots", 4);
+	c1.Divide(2, 2);
+
+	c1.cd(1);
+	spectrum.SetLineColor(kBlack);
 	spectrum.Draw();
-	gStyle->SetHistLineColor(kGreen);
-	fit_function_test.UseCurrentStyle();
-	fit_function_test.Draw("same");
-//	gStyle->SetHistLineColor(kGreen);
-//	unfolded_spectrum_topdown.UseCurrentStyle();
-//	unfolded_spectrum_topdown.Draw("same");
-//	gStyle->SetHistLineColor(kBlue);
-//	start_params.UseCurrentStyle();
-//	start_params.Draw();
-//	gStyle->SetHistLineColor(kBlue);
-//	topdown_fit.UseCurrentStyle();
-//	topdown_fit.Draw("same");
-//	gStyle->SetHistLineColor(kRed);
-//	params.UseCurrentStyle();
-//	params.Draw("same");
-	gStyle->SetHistLineColor(kAzure);
-	chi2_fit.UseCurrentStyle();
-	chi2_fit.Draw("same");
+
+	c1.cd(2);
+	topdown_fit.SetLineColor(kRed);
+	topdown_fit.Draw();
+	topdown_FEP.SetLineColor(kGreen);
+	topdown_FEP.Draw("same");
+	spectrum.SetLineColor(kBlack);
+	spectrum.Draw("same");
+
+	c1.cd(3);
+	chi2_fit.SetLineColor(kRed);
+	chi2_fit.Draw();
+	chi2_FEP.SetLineColor(kGreen);
+	chi2_FEP.Draw("same");
+	spectrum.SetLineColor(kBlack);
+	spectrum.Draw("same");
 
 	/************ Write results to file *************/
 
 	TFile outputfile(arguments.outputfile, "RECREATE");
-	unfolded_spectrum_topdown.Write();
 	spectrum.Write();
+	start_params.Write();
+	topdown_FEP.Write();
+	topdown_fit.Write();
 	params.Write();
+	chi2_FEP.Write();
+	chi2_fit.Write();
 	outputfile.Close();
 
-	app->Run();
+	if(arguments.interactive_mode){
+		app->Run();
+	}
+
+	time(&stop);
+	cout << "> Execution time: " << stop - start << " seconds" << endl;
 }

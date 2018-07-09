@@ -23,9 +23,9 @@ static char doc[] = "makematrix, Create a response matrix from a series of simul
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
-	{"histname", 'n', "HISTNAME", 0, "Name of histogram for detector response"},
-	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file"},
-	{ 0, 0, 0, 0, 0}
+	{"histname", 'n', "HISTNAME", 0, "Name of histogram for detector response", 0},
+	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
+	{ 0, 0, 0, 0, 0, 0}
 };
 
 static int parse_opt(int key, char *arg, struct argp_state *state){

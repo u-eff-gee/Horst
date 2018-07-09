@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #include <TF1.h>
 
@@ -8,6 +9,7 @@
 
 using std::cout;
 using std::endl;
+using std::vector;
 
 void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, TH1F &unfolded_spectrum, Int_t binstart, Int_t binstop){
 
@@ -37,18 +39,48 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, NBINS/BINNING);
 
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
-//		if(i < binstart || i > binstop){
-//			fitf.FixParameter(i, 0.);
-//		} else{
+		if(i < binstart || i > binstop){
+			fitf.FixParameter(i, 0.);
+		} else{
 			fitf.SetParameter(i, start_params.GetBinContent(i));
 			fitf.SetParLimits(i, 0., 1.);
-//		}
+		}
 
 	}
 
-	spectrum.Fit("fitf", "", "", binstart*BINNING, binstop*BINNING);
+	spectrum.Fit("fitf", "0", "", binstart*BINNING, binstop*BINNING);
 
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
 		params.SetBinContent(i, fitf.GetParameter(i-1));
+	}
+}
+
+void Fitter::fittedFEP(const TH1F &params, const TH2F &rema, TH1F &fitted_FEP){
+	for(Int_t i = 1; i <= (Int_t) NBINS/BINNING; ++i){
+		fitted_FEP.SetBinContent(i, params.GetBinContent(i)*rema.GetBinContent(i, i));
+	}
+}
+
+void Fitter::fittedSpectrum(const TH1F &params, const TH2F &rema, TH1F &fitted_spectrum){
+
+	FitFunction fitFunction(rema, 0, (Int_t) NBINS/BINNING);	
+
+	vector<Double_t> parameters((Int_t) NBINS/BINNING + 1);
+	for(Int_t i = 1; i <= (Int_t) NBINS/BINNING; ++i)
+		parameters[i] = params.GetBinContent(i);
+
+	Double_t bin = 0.;
+	for(Int_t i = 1; i <= (Int_t) NBINS/BINNING; ++i){
+		bin = (Double_t) i*BINNING;
+		fitted_spectrum.SetBinContent(i, fitFunction(&bin, &parameters[0]));
+	}
+}
+
+void Fitter::remove_negative(TH1F &hist){
+
+	for(Int_t i = 1; i <= hist.GetNbinsX(); ++i){
+		if(hist.GetBinContent(i) < 0.){
+			hist.SetBinContent(i, 0.);
+		}
 	}
 }
