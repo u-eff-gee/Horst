@@ -14,6 +14,7 @@
 #include "Config.h"
 #include "Fitter.h"
 #include "InputFileReader.h"
+#include "Reconstructor.h"
 #include "Uncertainty.h"
 
 using std::cout;
@@ -91,7 +92,7 @@ int main(int argc, char* argv[]){
 
 	InputFileReader inputFileReader;
 
-	TH1F spectrum("spec", "Original Spectrum", NBINS, 0., (Double_t) NBINS - 1);
+	TH1F spectrum("spectrum", "Original Spectrum", NBINS, 0., (Double_t) NBINS - 1);
 	inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
 	spectrum.Rebin(BINNING);
 
@@ -111,6 +112,10 @@ int main(int argc, char* argv[]){
 	fitter.fittedFEP(start_params, response_matrix, topdown_FEP);
 	TH1F topdown_fit("topdown_fit", "TopDown Fit", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
 	fitter.fittedSpectrum(start_params, response_matrix, topdown_fit);
+
+	Reconstructor reconstructor;
+	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	reconstructor.reconstruct(start_params, response_matrix, topdown_spectrum_reconstructed);
 
 	TH1F topdown_simulation_uncertainty("topdown_simulation_uncertainty", "TopDown Simulation Uncertainty", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
 	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
@@ -138,8 +143,11 @@ int main(int argc, char* argv[]){
 	TH1F chi2_fit("chi2_fit", "Chi2 Fit", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
 	fitter.fittedSpectrum(params, response_matrix, chi2_fit);
 
-	TH1F simulation_uncertainty("simulation_uncertainty", "Simulation Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
-	TH1F spectrum_uncertainty("spectrum_uncertainty", "Spectrum Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F spectrum_reconstructed("spectrum_reconstructed", "Spectrum Reconstructed", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	reconstructor.reconstruct(params, response_matrix, spectrum_reconstructed);
+
+	TH1F simulation_uncertainty("simulation_uncertainty", "Simulation Uncertainty", (Int_t) NBINS/ (Int_t) BINNING, 0., (Double_t) NBINS - 1);
+	TH1F spectrum_uncertainty("spectrum_uncertainty", "Spectrum Uncertainty", (Int_t) NBINS/ (Int_t) BINNING, 0., (Double_t) NBINS - 1);
 	uncertainty.getUncertainty(params, spectrum, response_matrix, simulation_uncertainty, spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
 
 	TH1F total_uncertainty("total_uncertainty", "Total Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
@@ -149,8 +157,8 @@ int main(int argc, char* argv[]){
 	uncertainties[2] = &spectrum_uncertainty;
 	uncertainty.getTotalUncertainty(uncertainties, total_uncertainty);
 
-	/************ Reconstruct original spectrum *************/
-
+	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	reconstructor.uncertainty(total_uncertainty, response_matrix, reconstruction_uncertainty);
 
 	/************ Plot results *************/
 
@@ -176,12 +184,14 @@ int main(int argc, char* argv[]){
 	chi2_FEP.Draw("same");
 	spectrum.SetLineColor(kBlack);
 	spectrum.Draw("same");
-//	simulation_uncertainty.SetLineColor(kOrange);
-//	simulation_uncertainty.Draw("same");
-//	spectrum_uncertainty.SetLineColor(kBlue);
-//	spectrum_uncertainty.Draw("same");
-//	total_uncertainty.SetLineColor(kBlue);
-//	total_uncertainty.Draw("same");
+
+	c1.cd(4);
+	spectrum_reconstructed.SetLineColor(kBlack);
+	spectrum_reconstructed.Draw();
+	reconstruction_uncertainty.SetLineColor(kBlack);
+	reconstruction_uncertainty.SetLineStyle(2);
+	reconstruction_uncertainty.Add(&reconstruction_uncertainty, &spectrum_reconstructed);
+	reconstruction_uncertainty.Draw("same");
 
 	/************ Write results to file *************/
 
@@ -195,6 +205,8 @@ int main(int argc, char* argv[]){
 	topdown_simulation_uncertainty.Write();
 	topdown_spectrum_uncertainty.Write();
 	topdown_total_uncertainty.Write();
+	topdown_spectrum_reconstructed.Write();
+
 	params.Write();
 	chi2_FEP.Write();
 	chi2_fit.Write();
@@ -202,6 +214,7 @@ int main(int argc, char* argv[]){
 	simulation_uncertainty.Write();
 	spectrum_uncertainty.Write();
 	total_uncertainty.Write();
+	spectrum_reconstructed.Write();
 	outputfile.Close();
 
 	if(arguments.interactive_mode){
