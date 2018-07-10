@@ -31,7 +31,7 @@ void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, TH1F 
 	}
 }
 
-void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit, Int_t binstart, Int_t binstop){
+void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit_uncertainty, Int_t binstart, Int_t binstop){
 
 	cout << "> Fitting spectrum ..." << endl;
 
@@ -54,6 +54,7 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
 		params.SetBinContent(i, fitf.GetParameter(i-1));
+		fit_uncertainty.SetBinContent(i, fitf.GetParError(i-1)*rema.GetBinContent(i, i));
 	}
 }
 

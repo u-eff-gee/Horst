@@ -14,6 +14,7 @@
 #include "Config.h"
 #include "Fitter.h"
 #include "InputFileReader.h"
+#include "Uncertainty.h"
 
 using std::cout;
 using std::endl;
@@ -111,19 +112,28 @@ int main(int argc, char* argv[]){
 	TH1F topdown_fit("topdown_fit", "TopDown Fit", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
 	fitter.fittedSpectrum(start_params, response_matrix, topdown_fit);
 
+	TH1F topdown_simulation_uncertainty("topdown_simulation_uncertainty", "TopDown Simulation Uncertainty", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	Uncertainty uncertainty;
+	uncertainty.getUncertainty(start_params, spectrum, response_matrix, topdown_simulation_uncertainty, topdown_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
+
 	fitter.remove_negative(start_params);
 
 	/************ Fit *************/
 
 	TH1F params("params", "Parameters", NBINS/BINNING, 0., (Double_t) NBINS - 1);
-	TH1F fit("fit", "Fit", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F fit_uncertainty("fit_uncertainty", "Fit Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
 
-	fitter.fit(spectrum, response_matrix, start_params, params, fit, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
+	fitter.fit(spectrum, response_matrix, start_params, params, fit_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
 
 	TH1F chi2_FEP("chi2_FEP", "Chi2 FEP", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
 	fitter.fittedFEP(params, response_matrix, chi2_FEP);
 	TH1F chi2_fit("chi2_fit", "Chi2 Fit", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
 	fitter.fittedSpectrum(params, response_matrix, chi2_fit);
+
+	TH1F simulation_uncertainty("simulation_uncertainty", "Simulation Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F spectrum_uncertainty("spectrum_uncertainty", "Spectrum Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	uncertainty.getUncertainty(params, spectrum, response_matrix, simulation_uncertainty, spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
 
 	/************ Plot results *************/
 
@@ -149,8 +159,14 @@ int main(int argc, char* argv[]){
 	chi2_FEP.Draw("same");
 	spectrum.SetLineColor(kBlack);
 	spectrum.Draw("same");
+	simulation_uncertainty.SetLineColor(kOrange);
+	simulation_uncertainty.Draw("same");
+	spectrum_uncertainty.SetLineColor(kBlue);
+	spectrum_uncertainty.Draw("same");
 
 	/************ Write results to file *************/
+
+	cout << "> Writing output file " << arguments.outputfile << " ..." << endl;
 
 	TFile outputfile(arguments.outputfile, "RECREATE");
 	spectrum.Write();
@@ -160,9 +176,13 @@ int main(int argc, char* argv[]){
 	params.Write();
 	chi2_FEP.Write();
 	chi2_fit.Write();
+	fit_uncertainty.Write();
+	simulation_uncertainty.Write();
+	spectrum_uncertainty.Write();
 	outputfile.Close();
 
 	if(arguments.interactive_mode){
+		cout << "> Starting interactive plot ..." << endl;
 		app->Run();
 	}
 

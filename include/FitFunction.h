@@ -12,6 +12,8 @@ class FitFunction{
 	{};
 		~FitFunction(){};
 		Double_t operator()(Double_t *x, Double_t *p);
+		Double_t getSimulationStatisticalUncertainty(const Int_t bin, const TH1F &params);
+		Double_t getSpectrumStatisticalUncertainty(const Int_t bin, const TH1F &params, const TH1F &spectrum);
 
 	private:
 		TH2F response_matrix;

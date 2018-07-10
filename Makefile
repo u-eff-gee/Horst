@@ -8,13 +8,13 @@ CPP = g++
 CPPFLAGS = -g -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -std=c++11 -I$(INCDIR)
 ROOTFLAGS=`root-config --cflags --glibs`
 
-_DEPS = Config.h InputFileReader.h MakeMatrix.h Fitter.h FitFunction.h
+_DEPS = Config.h InputFileReader.h MakeMatrix.h Fitter.h FitFunction.h Uncertainty.h
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS)) 
 
 _OBJ_MATRIX = MakeMatrix.o InputFileReader.o
 OBJ_MATRIX = $(patsubst %,$(OBJDIR)/%,$(_OBJ_MATRIX))
 
-_OBJ = InputFileReader.o horst.o Fitter.o FitFunction.o
+_OBJ = InputFileReader.o horst.o Fitter.o FitFunction.o Uncertainty.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
