@@ -117,7 +117,14 @@ int main(int argc, char* argv[]){
 	Uncertainty uncertainty;
 	uncertainty.getUncertainty(start_params, spectrum, response_matrix, topdown_simulation_uncertainty, topdown_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
 
+	TH1F topdown_total_uncertainty("topdown_total_uncertainty", "TopDown Total Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	vector<TH1F*> topdown_uncertainties(2);
+	topdown_uncertainties[0] = &topdown_simulation_uncertainty;
+	topdown_uncertainties[1] = &topdown_spectrum_uncertainty;
+	uncertainty.getTotalUncertainty(topdown_uncertainties, topdown_total_uncertainty);
+
 	fitter.remove_negative(start_params);
+
 
 	/************ Fit *************/
 
@@ -134,6 +141,16 @@ int main(int argc, char* argv[]){
 	TH1F simulation_uncertainty("simulation_uncertainty", "Simulation Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
 	TH1F spectrum_uncertainty("spectrum_uncertainty", "Spectrum Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
 	uncertainty.getUncertainty(params, spectrum, response_matrix, simulation_uncertainty, spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
+
+	TH1F total_uncertainty("total_uncertainty", "Total Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	vector<TH1F*> uncertainties(3);
+	uncertainties[0] = &fit_uncertainty;
+	uncertainties[1] = &simulation_uncertainty;
+	uncertainties[2] = &spectrum_uncertainty;
+	uncertainty.getTotalUncertainty(uncertainties, total_uncertainty);
+
+	/************ Reconstruct original spectrum *************/
+
 
 	/************ Plot results *************/
 
@@ -159,10 +176,12 @@ int main(int argc, char* argv[]){
 	chi2_FEP.Draw("same");
 	spectrum.SetLineColor(kBlack);
 	spectrum.Draw("same");
-	simulation_uncertainty.SetLineColor(kOrange);
-	simulation_uncertainty.Draw("same");
-	spectrum_uncertainty.SetLineColor(kBlue);
-	spectrum_uncertainty.Draw("same");
+//	simulation_uncertainty.SetLineColor(kOrange);
+//	simulation_uncertainty.Draw("same");
+//	spectrum_uncertainty.SetLineColor(kBlue);
+//	spectrum_uncertainty.Draw("same");
+//	total_uncertainty.SetLineColor(kBlue);
+//	total_uncertainty.Draw("same");
 
 	/************ Write results to file *************/
 
@@ -173,12 +192,16 @@ int main(int argc, char* argv[]){
 	start_params.Write();
 	topdown_FEP.Write();
 	topdown_fit.Write();
+	topdown_simulation_uncertainty.Write();
+	topdown_spectrum_uncertainty.Write();
+	topdown_total_uncertainty.Write();
 	params.Write();
 	chi2_FEP.Write();
 	chi2_fit.Write();
 	fit_uncertainty.Write();
 	simulation_uncertainty.Write();
 	spectrum_uncertainty.Write();
+	total_uncertainty.Write();
 	outputfile.Close();
 
 	if(arguments.interactive_mode){

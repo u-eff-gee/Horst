@@ -15,3 +15,15 @@ void Uncertainty::getUncertainty(const TH1F &params, const TH1F &spectrum, const
 		}
 	}
 }
+
+void Uncertainty::getTotalUncertainty(vector<TH1F*> &uncertainties, TH1F &total_uncertainty){
+	Double_t bin_content = 0.;
+
+	for(Int_t i = 1; i <= (Int_t) NBINS/ (Int_t) BINNING; ++i){
+		bin_content = 0.;
+		for(auto unc : uncertainties){
+			bin_content += unc->GetBinContent(i)*unc->GetBinContent(i);
+		}
+		total_uncertainty.SetBinContent(i, sqrt(bin_content));
+	}
+}
