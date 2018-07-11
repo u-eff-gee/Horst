@@ -1,11 +1,6 @@
 #include "FitFunction.h"
 #include "Config.h"
 
-#include <iostream>
-
-using std::cout;
-using std::endl;
-
 Double_t FitFunction::operator()(Double_t *x, Double_t *p){
 	Int_t bin = (Int_t) round(x[0]/(Double_t) BINNING);
 	Double_t bin_content = 0.;

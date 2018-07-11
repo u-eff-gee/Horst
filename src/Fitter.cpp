@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 
 #include <TF1.h>
@@ -7,33 +6,29 @@
 #include "FitFunction.h"
 #include "Fitter.h"
 
-using std::cout;
-using std::endl;
 using std::vector;
 
-void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, TH1F &unfolded_spectrum, Int_t binstart, Int_t binstop){
+void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t binstart, Int_t binstop){
 
-	cout << "> Unfold spectrum using top-down algorithm ..." << endl;
+	TH1F topdown_unfolded_spectrum("topdown_unfolded_spectru", "Unfolded_Spectrum_TopDown", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
 
 	Double_t parameter = 0.;
 	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
-		unfolded_spectrum.SetBinContent(i, spectrum.GetBinContent(i));
+		topdown_unfolded_spectrum.SetBinContent(i, spectrum.GetBinContent(i));
 		params.SetBinContent(i, 0.);
 	}
 
 	for(Int_t i = binstop; i >= binstart; --i){
-		parameter = unfolded_spectrum.GetBinContent(i)/rema.GetBinContent(i, i);
+		parameter = topdown_unfolded_spectrum.GetBinContent(i)/rema.GetBinContent(i, i);
 		params.SetBinContent(i, parameter);
 
 		for(Int_t j = binstop - 1; j >= 0; --j){
-			unfolded_spectrum.SetBinContent(j, unfolded_spectrum.GetBinContent(j) - parameter*rema.GetBinContent(i, j));
+			topdown_unfolded_spectrum.SetBinContent(j, topdown_unfolded_spectrum.GetBinContent(j) - parameter*rema.GetBinContent(i, j));
 		}
 	}
 }
 
-void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit_uncertainty, Int_t binstart, Int_t binstop){
-
-	cout << "> Fitting spectrum ..." << endl;
+void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit_uncertainty, Int_t binstart, Int_t binstop, const Bool_t verbose){
 
 	FitFunction fitFunction(rema, binstart, binstop);
 	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, NBINS/BINNING);
@@ -50,7 +45,11 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 
 	}
 
-	spectrum.Fit("fitf", "0", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
+	if(verbose){
+		spectrum.Fit("fitf", "0N", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
+	} else{
+		spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
+	}
 
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
 		params.SetBinContent(i, fitf.GetParameter(i-1));

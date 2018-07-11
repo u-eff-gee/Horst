@@ -5,7 +5,7 @@ EXE_MATRIX = makematrix
 EXE = horst
 
 CPP = g++
-CPPFLAGS = -g -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -std=c++11 -I$(INCDIR)
+CPPFLAGS = -O3 -Wall -Wextra -Wshadow -std=c++11 -I$(INCDIR)
 ROOTFLAGS=`root-config --cflags --glibs`
 
 _DEPS = Config.h FitFunction.h Fitter.h InputFileReader.h MakeMatrix.h Reconstructor.h Uncertainty.h
@@ -21,6 +21,10 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 	$(CPP) -c -o $@ $< $(CPPFLAGS) $(ROOTFLAGS) 
 
 all: $(EXE) $(EXE_MATRIX)
+
+debug: CPPFLAGS += -g -Wconversion -Wsign-conversion
+debug: $(EXE) $(EXE_MATRIX)
+
 
 $(EXE_MATRIX): $(OBJ_MATRIX) 
 	$(CPP) -o $@ $^ $(CPPFLAGS) $(ROOTFLAGS)

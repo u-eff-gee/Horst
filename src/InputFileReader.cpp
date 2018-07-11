@@ -16,7 +16,7 @@ using std::string;
 using std::stringstream;
 
 void InputFileReader::readInputFile(const TString inputfilename, vector<TString> &filenames, vector<Double_t> &energies){
-
+	
 	cout << "> Reading input file " << inputfilename << " ..." << endl;
 
 	ifstream file;	
@@ -87,8 +87,6 @@ void InputFileReader::writeMatrix(TH2F &response_matrix, TString outputfilename)
 
 void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile){
 
-	cout << "> Reading matrix file " << matrixfile << " ..." << endl;
-
 	TFile *inputFile = new TFile(matrixfile);
 	TH2F *rema = (TH2F*) gDirectory->Get("rema");
 	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
@@ -102,8 +100,6 @@ void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile
 
 void InputFileReader::readTxtSpectrum(TH1F &spectrum, const TString spectrumfile){
 	
-	cout << "> Reading spectrum file " << spectrumfile << " ..." << endl;
-
 	ifstream file;	
 	file.open(spectrumfile);
 	string line = "";
