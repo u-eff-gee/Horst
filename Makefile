@@ -1,6 +1,7 @@
 INCDIR=include
 SRCDIR=src
 OBJDIR=obj
+EXE_CONVERTER = convert_to_txt
 EXE_MATRIX = makematrix
 EXE = horst
 
@@ -11,6 +12,9 @@ ROOTFLAGS=`root-config --cflags --glibs`
 _DEPS = Config.h FitFunction.h Fitter.h InputFileReader.h MakeMatrix.h Reconstructor.h Uncertainty.h
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS)) 
 
+_OBJ_CONVERTER = HistogramToTxt.o 
+OBJ_CONVERTER = $(patsubst %,$(OBJDIR)/%,$(_OBJ_CONVERTER))
+
 _OBJ_MATRIX = MakeMatrix.o InputFileReader.o
 OBJ_MATRIX = $(patsubst %,$(OBJDIR)/%,$(_OBJ_MATRIX))
 
@@ -20,11 +24,13 @@ OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 	$(CPP) -c -o $@ $< $(CPPFLAGS) $(ROOTFLAGS) 
 
-all: $(EXE) $(EXE_MATRIX)
+all: $(EXE) $(EXE_MATRIX) $(EXE_CONVERTER)
 
 debug: CPPFLAGS += -g -Wconversion -Wsign-conversion
-debug: $(EXE) $(EXE_MATRIX)
+debug: $(EXE) $(EXE_MATRIX) $(EXE_CONVERTER)
 
+$(EXE_CONVERTER): $(OBJ_CONVERTER) 
+	$(CPP) -o $@ $^ $(CPPFLAGS) $(ROOTFLAGS)
 
 $(EXE_MATRIX): $(OBJ_MATRIX) 
 	$(CPP) -o $@ $^ $(CPPFLAGS) $(ROOTFLAGS)
@@ -36,3 +42,4 @@ clean:
 	rm -rf obj/*
 	rm -f makematrix
 	rm -f horst
+	rm -f convert_to_txt
