@@ -43,10 +43,10 @@ Double_t FitFunction::getSpectrumStatisticalUncertainty(const Int_t bin, const T
 	Double_t bin_content = 0.;
 	Double_t spectrum_bin_content = 1.;
 
-	for(Int_t i = bin_stop; i > bin; --i){
+	for(Int_t i = bin_stop; i >= bin; --i){
 		spectrum_bin_content = spectrum.GetBinContent(i);
 		if(spectrum_bin_content > 0.){	// Ignore bins with negative values (should not be in the original spectrum anyway) or zero content.
-			bin_content += params.GetBinContent(i)*1./spectrum_bin_content*response_matrix.GetBinContent(i, bin)*response_matrix.GetBinContent(i, bin);
+			bin_content += params.GetBinContent(i)*params.GetBinContent(i)*1./spectrum_bin_content*response_matrix.GetBinContent(i, bin)*response_matrix.GetBinContent(i, bin);
 		}
 	}
 
