@@ -30,7 +30,7 @@ void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t
 	TH1F topdown_unfolded_spectrum("topdown_unfolded_spectru", "Unfolded_Spectrum_TopDown", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
 
 	Double_t parameter = 0.;
-	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+	for(Int_t i = 0; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
 		topdown_unfolded_spectrum.SetBinContent(i, spectrum.GetBinContent(i));
 		params.SetBinContent(i, 0.);
 	}
@@ -52,7 +52,7 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 
 	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
 
-	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
+	for(Int_t i = 0; i <= start_params.GetNbinsX(); ++i){
 		if(i < binstart || i > binstop){
 			fitf.FixParameter(i, 0.);
 		} else{

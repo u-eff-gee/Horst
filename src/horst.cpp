@@ -226,6 +226,8 @@ int main(int argc, char* argv[]){
 		reconstruction_uncertainty.SetLineStyle(2);
 		reconstruction_uncertainty.Add(&reconstruction_uncertainty, &spectrum_reconstructed);
 		reconstruction_uncertainty.Draw("same");
+		topdown_spectrum_reconstructed.SetLineColor(kOrange);
+		topdown_spectrum_reconstructed.Draw("same");
 	}
 
 	/************ Write results to file *************/
