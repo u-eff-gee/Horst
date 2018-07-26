@@ -131,6 +131,8 @@ int main(int argc, char* argv[]){
 
 	TH1F spectrum_reconstructed("spectrum_reconstructed", "Spectrum Reconstructed", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
 	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F reconstruction_uncertainty_low("reconstruction_uncertainty_low", "Reconstruction Uncertainty lower Limit", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F reconstruction_uncertainty_up("reconstruction_uncertainty_up", "Reconstruction Uncertainty upper Limit", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
 
 	/************ Start ROOT application *************/
 
@@ -190,6 +192,7 @@ int main(int argc, char* argv[]){
 	uncertainty.getTotalUncertainty(uncertainties, fit_total_uncertainty);
 
 	reconstructor.uncertainty(fit_total_uncertainty, response_matrix, reconstruction_uncertainty);
+	uncertainty.getLowerAndUpperLimit(spectrum_reconstructed, reconstruction_uncertainty, reconstruction_uncertainty_low, reconstruction_uncertainty_up, true);
 
 	/************ Plot results *************/
 
@@ -220,12 +223,12 @@ int main(int argc, char* argv[]){
 		spectrum.Draw("same");
 
 		c1.cd(4);
-		spectrum_reconstructed.SetLineColor(kBlack);
-		spectrum_reconstructed.Draw();
-		reconstruction_uncertainty.SetLineColor(kBlack);
-		reconstruction_uncertainty.SetLineStyle(2);
-		reconstruction_uncertainty.Add(&reconstruction_uncertainty, &spectrum_reconstructed);
-		reconstruction_uncertainty.Draw("same");
+		reconstruction_uncertainty_up.SetFillColor(kGray);
+		reconstruction_uncertainty_up.SetLineColor(kBlack);
+		reconstruction_uncertainty_up.Draw("same");
+		reconstruction_uncertainty_low.SetLineColor(kBlack);
+		reconstruction_uncertainty_low.SetFillColor(10);
+		reconstruction_uncertainty_low.Draw("same");
 		topdown_spectrum_reconstructed.SetLineColor(kOrange);
 		topdown_spectrum_reconstructed.Draw("same");
 	}

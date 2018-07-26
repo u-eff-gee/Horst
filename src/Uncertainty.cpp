@@ -44,3 +44,31 @@ void Uncertainty::getTotalUncertainty(vector<TH1F*> &uncertainties, TH1F &total_
 		total_uncertainty.SetBinContent(i, sqrt(bin_content));
 	}
 }
+
+void Uncertainty::getLowerAndUpperLimit(const TH1F &spectrum, const TH1F &uncertainty, TH1F &uncertainty_low, TH1F &uncertainty_up, Bool_t no_zeros){
+	Double_t spectrum_bin_content = 0.;
+	Double_t uncertainty_bin_content = 0.;
+
+	if(no_zeros){
+		for(Int_t i = 0; i <= (Int_t) NBINS/ (Int_t) BINNING; ++i){
+			spectrum_bin_content = spectrum.GetBinContent(i);
+			uncertainty_bin_content = uncertainty.GetBinContent(i);	
+			uncertainty_up.SetBinContent(i, spectrum_bin_content + uncertainty_bin_content);
+
+			if(spectrum_bin_content - uncertainty_bin_content >= 0.){
+				uncertainty_low.SetBinContent(i, spectrum_bin_content - uncertainty_bin_content);
+			
+			} else{
+				uncertainty_low.SetBinContent(i, 0.);
+			}
+		}
+	} else{
+		for(Int_t i = 0; i <= (Int_t) NBINS/ (Int_t) BINNING; ++i){
+			spectrum_bin_content = spectrum.GetBinContent(i);
+			uncertainty_bin_content = uncertainty.GetBinContent(i);	
+			uncertainty_up.SetBinContent(i, spectrum_bin_content + uncertainty_bin_content);
+			uncertainty_low.SetBinContent(i, spectrum_bin_content - uncertainty_bin_content);
+		}
+	}
+}
+
