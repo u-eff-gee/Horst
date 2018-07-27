@@ -151,6 +151,7 @@ int main(int argc, char* argv[]){
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
 	response_matrix.Rebin2D(BINNING, BINNING);
+	n_simulated_particles.Rebin(BINNING);
 
 	/************ Use Top-Down unfolding to get start parameters *************/
 
@@ -160,7 +161,7 @@ int main(int argc, char* argv[]){
 	fitter.fittedFEP(topdown_params, response_matrix, topdown_FEP);
 	fitter.fittedSpectrum(topdown_params, response_matrix, topdown_fit);
 
-	reconstructor.reconstruct(topdown_params, response_matrix, topdown_spectrum_reconstructed);
+	reconstructor.reconstruct(topdown_params, n_simulated_particles, topdown_spectrum_reconstructed);
 
 	Uncertainty uncertainty;
 	uncertainty.getUncertainty(topdown_params, spectrum, response_matrix, topdown_simulation_uncertainty, topdown_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
@@ -182,7 +183,7 @@ int main(int argc, char* argv[]){
 	fitter.fittedFEP(fit_params, response_matrix, fit_FEP);
 	fitter.fittedSpectrum(fit_params, response_matrix, fit_result);
 
-	reconstructor.reconstruct(fit_params, response_matrix, spectrum_reconstructed);
+	reconstructor.reconstruct(fit_params, n_simulated_particles, spectrum_reconstructed);
 
 	uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
 
@@ -192,7 +193,7 @@ int main(int argc, char* argv[]){
 	uncertainties[2] = &fit_spectrum_uncertainty;
 	uncertainty.getTotalUncertainty(uncertainties, fit_total_uncertainty);
 
-	reconstructor.uncertainty(fit_total_uncertainty, response_matrix, reconstruction_uncertainty);
+	reconstructor.uncertainty(fit_total_uncertainty, response_matrix, n_simulated_particles, reconstruction_uncertainty);
 	uncertainty.getLowerAndUpperLimit(spectrum_reconstructed, reconstruction_uncertainty, reconstruction_uncertainty_low, reconstruction_uncertainty_up, true);
 
 	/************ Plot results *************/
@@ -260,8 +261,11 @@ int main(int argc, char* argv[]){
 	fit_spectrum_uncertainty.Write();
 	fit_total_uncertainty.Write();
 
+	n_simulated_particles.Write();
 	spectrum_reconstructed.Write();
 	reconstruction_uncertainty.Write();
+	reconstruction_uncertainty_low.Write();
+	reconstruction_uncertainty_up.Write();
 
 	outputfile.Close();
 

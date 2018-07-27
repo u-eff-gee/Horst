@@ -27,8 +27,8 @@ public:
 	Reconstructor(){};
 	~Reconstructor(){};
 
-	void reconstruct(const TH1F &params, const TH2F &rema, TH1F &reconstructed_spectrum);
-	void uncertainty(const TH1F &total_uncertainty, const TH2F &rema, TH1F &reconstruction_uncertainty);
+	void reconstruct(const TH1F &params, const TH1F &n_simulated_particles, TH1F &reconstructed_spectrum);
+	void uncertainty(const TH1F &total_uncertainty, const TH2F &rema, const TH1F &n_simulated_particles, TH1F &reconstruction_uncertainty);
 };
 
 #endif
