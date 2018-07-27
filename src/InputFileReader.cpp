@@ -32,21 +32,22 @@ using std::ifstream;
 using std::string;
 using std::stringstream;
 
-void InputFileReader::readInputFile(const TString inputfilename, vector<TString> &filenames, vector<Double_t> &energies){
+void InputFileReader::readInputFile(const TString inputfilename, vector<TString> &filenames, vector<Double_t> &energies, vector<Double_t> &n_simulated_particles){
 	
 	cout << "> Reading input file " << inputfilename << " ..." << endl;
 
 	ifstream file;	
 	file.open(inputfilename);
-	string line, energy, filename;
+	string line, energy, filename, n_particles;
 	stringstream sst;
 
 	if(file.is_open()){
 		while(getline(file, line)){
 			sst.str(line);
-			sst >> filename >> energy;
+			sst >> filename >> energy >> n_particles;
 			filenames.push_back(filename);
 			energies.push_back(atof(energy.c_str()));
+			n_simulated_particles.push_back(atof(n_particles.c_str()));
 			sst.clear();
 		}
 
@@ -55,7 +56,7 @@ void InputFileReader::readInputFile(const TString inputfilename, vector<TString>
 	}
 }
 
-void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<Double_t> &energies, const TString histname, TH2F &response_matrix){
+void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<Double_t> &energies, const vector<Double_t> &n_particles, const TString histname, TH2F &response_matrix, TH1F &n_simulated_particles){
 	cout << "> Creating matrix ..." << endl;
 
 	Double_t min_dist = (Double_t) NBINS;
@@ -89,20 +90,24 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 			}
 		}
 
+		// Fill number of simulated particles into TH1F
+		n_simulated_particles.SetBinContent(i, n_particles[best_simulation]);
+
 		inputFile->Close();
 	}
 }
 
-void InputFileReader::writeMatrix(TH2F &response_matrix, TString outputfilename) const {
+void InputFileReader::writeMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, TString outputfilename) const {
 	TFile *outputFile = new TFile(outputfilename, "RECREATE");	
 
 	response_matrix.Write();
+	n_simulated_particles.Write();
 	outputFile->Close();
 
 	cout << "> Wrote matrix to file " << outputfilename << endl;
 }
 
-void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile){
+void InputFileReader::readMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const TString matrixfile){
 
 	TFile *inputFile = new TFile(matrixfile);
 	TH2F *rema = (TH2F*) gDirectory->Get("rema");
@@ -110,6 +115,11 @@ void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile
 		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
 			response_matrix.SetBinContent(i, j, rema->GetBinContent(i, j));
 		}
+	}
+
+	TH1F *n_particles = (TH1F*) gDirectory->Get("n_simulated_particles");
+	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
+		n_simulated_particles.SetBinContent(i, n_particles->GetBinContent(i));
 	}
 
 	inputFile->Close();

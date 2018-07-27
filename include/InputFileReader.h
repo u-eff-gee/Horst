@@ -30,12 +30,12 @@ public:
 	InputFileReader(){};
 	~InputFileReader(){};
 
-	void readInputFile(const TString inputfilename, vector<TString> &filenames, vector<Double_t> &energies);
+	void readInputFile(const TString inputfilename, vector<TString> &filenames, vector<Double_t> &energies, vector<Double_t> &n_simulated_particles);
 
-	void fillMatrix(const vector<TString> &filenames, const vector<Double_t> &energies, const TString histname, TH2F &response_matrix);
+	void fillMatrix(const vector<TString> &filenames, const vector<Double_t> &energies, const vector<Double_t> &n_particles, const TString histname, TH2F &response_matrix, TH1F &n_simulated_particles);
 
-	void writeMatrix(TH2F &response_matrix, TString outputfilename) const;
-	void readMatrix(TH2F &response_matrix, const TString matrixfile);
+	void writeMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, TString outputfilename) const;
+	void readMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const TString matrixfile);
 
 	void readTxtSpectrum(TH1F &spectrum, const TString spectrumfile);
 };

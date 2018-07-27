@@ -109,6 +109,7 @@ int main(int argc, char* argv[]){
 
 	// Input
 	TH1F spectrum("spectrum", "Input Spectrum", NBINS, 0., (Double_t) NBINS - 1);
+	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
 
 	// TopDown algorithm
@@ -148,7 +149,7 @@ int main(int argc, char* argv[]){
 	spectrum.Rebin(BINNING);
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
-	inputFileReader.readMatrix(response_matrix, arguments.matrixfile);
+	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
 	response_matrix.Rebin2D(BINNING, BINNING);
 
 	/************ Use Top-Down unfolding to get start parameters *************/

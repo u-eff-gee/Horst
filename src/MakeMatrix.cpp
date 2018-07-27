@@ -69,14 +69,19 @@ int main(int argc, char* argv[]){
 	Arguments arguments;
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
+	if(arguments.outputfile == "")
+		arguments.outputfile = "output.root";
+
 	vector<TString> filenames;
 	vector<Double_t> energies;
+	vector<Double_t> n_simulated_particles;
 
 	InputFileReader inputFileReader;
-	inputFileReader.readInputFile(arguments.inputfile, filenames, energies);
+	inputFileReader.readInputFile(arguments.inputfile, filenames, energies, n_simulated_particles);
 
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
-	inputFileReader.fillMatrix(filenames, energies, arguments.histname, response_matrix);
-	inputFileReader.writeMatrix(response_matrix, arguments.outputfile);
+	TH1F n_particles("n_simulated_particles", "Initial simulated particles", NBINS, 0., (Double_t) (NBINS - 1));
+	inputFileReader.fillMatrix(filenames, energies, n_simulated_particles, arguments.histname, response_matrix, n_particles);
+	inputFileReader.writeMatrix(response_matrix, n_particles, arguments.outputfile);
 
 }
