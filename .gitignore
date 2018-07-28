@@ -1,0 +1,15 @@
+# ROOT files
+*.root
+
+# Spectra
+*.tv
+
+# Input
+*.txt
+
+# Compiled files
+obj/*.o
+!obj/.o
+horst
+makematrix
+convert_to_txt
