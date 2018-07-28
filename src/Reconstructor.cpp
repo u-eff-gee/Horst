@@ -31,3 +31,24 @@ void Reconstructor::uncertainty(const TH1F &total_uncertainty, const TH2F &rema,
 		reconstruction_uncertainty.SetBinContent(i, total_uncertainty.GetBinContent(i)*n_simulated_particles.GetBinContent(i)/rema.GetBinContent(i, i));
 	}
 }
+
+void Reconstructor::addResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum){
+	
+	Double_t factor = 1.;
+
+	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		response_spectrum.SetBinContent(i, 0.);
+	}
+
+	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		factor = spectrum.GetBinContent(i)/rema.GetBinContent(i, i)*inverse_n_simulated_particles.GetBinContent(i);
+
+		for(Int_t j = i; j > 0; --j){
+			response_spectrum.SetBinContent(j, response_spectrum.GetBinContent(j) + factor*rema.GetBinContent(i, j));
+		}
+	}
+}
+
+void Reconstructor::addRealisticResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum){
+
+}
