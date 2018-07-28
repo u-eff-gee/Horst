@@ -139,6 +139,7 @@ int main(int argc, char* argv[]){
 
 	TApplication *app = nullptr;
 	if(arguments.interactive_mode){
+		argc = 1; // Prevent name clashes with options of TApplication
 		app = new TApplication("Reconstruction", &argc, argv);
 	}
 
