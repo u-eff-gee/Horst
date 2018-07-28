@@ -60,7 +60,7 @@ In order to use `Horst`, two things are needed:
  * `spectrum.txt`: An experimental spectrum from which the original spectrum should be reconstructed (single-column file, no text header)
  * `matrix.root`: A simulated detector response matrix (ROOT file with an `NBINSxNBINS` TH2F histogram)
 
-Both the matrix and the spectrum need to have the same binning (examples: 1 keV per 1 bin). The spectrum should have at least as many bins as the number of rows/columns in the response matrix. All higher bins will simply be ignored.
+Both the matrix and the spectrum need to have the same binning (example: 1 keV per 1 bin). The spectrum should have at least as many bins as the number of rows/columns in the response matrix. All higher bins will simply be ignored.
 For the reconstruction procedure, both can be rebinned to reduce the computing time which depends approximately exponentially on the number of bins.
 The integer number of bins `NBINS` of the `NBINSxNBINS` matrix and the integer rebinning factor `BINNING` (`BINNING`==1 means no rebinning, `BINNING` = 2 means two bins are merged into one ...) can be hard-coded in `Horst/include/Config.h`, which will communicate the values to `Horst` and the auxiliary programs. After changing anything in `Config.h`, do not forget to `make` the code again.
 
@@ -140,8 +140,12 @@ U. Gayer (gayer.udo@gmail.com)
 This code is distributed under the terms of the GNU General Public License. See the COPYING file for more information.
 
 ## 6 References <a name="references"></a>
+
 <a name="ref-higs">[1]</a> H. R. Weller *et al.*, “Research opportunities at the upgraded HIγS facility”, Prog. Part. Nucl. Phys. **62.1**, 257 (2009). [`doi:10.1016/j.ppnp.2008.07.001`](https://doi.org/10.1016/j.ppnp.2008.07.001).
+
 <a name="ref-g4_1">[2]</a> S. Agostinelli *et al.*, “GEANT4 - a simulation toolkit”, Nucl. Inst. Meth. A **506.3**, 250 (2003). [`doi:10.1016/S0168-9002(03)01368-8`](https://doi.org/10.1016/S0168-9002(03)01368-8).  
+
 <a name="ref-g4_2">[3]</a> J. Allison *et al.*, “GEANT4 developments and applications”, IEEE Transactions on Nuclear Science, **53.1**, 270 (2006). [`doi:10.1109/TNS.2006.869826`](https://doi.org/10.1109/TNS.2006.869826).  
+
 <a name="ref-g4_3">[4]</a> J. Allison *et al.*, “Recent developments in GEANT4”, Nucl. Inst. Meth. A **835**, 186 (2016). [`doi:10.1016/j.nima.2016.06.125`](https://doi.org/10.1016/j.nima.2016.06.125).  
 
