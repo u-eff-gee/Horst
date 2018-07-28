@@ -30,6 +30,7 @@
 #include "Config.h"
 #include "InputFileReader.h"
 #include "Reconstructor.h"
+#include "Fitter.h"
 
 using std::cout;
 using std::endl;
@@ -94,6 +95,7 @@ int main(int argc, char* argv[]){
 
 	InputFileReader inputFileReader;
 	Reconstructor reconstructor;
+	Fitter fitter;
 
 	/************ Initialize histograms *************/
 
@@ -106,6 +108,7 @@ int main(int argc, char* argv[]){
 	// Output
 	
 	TH1F response_spectrum("response_spectrum", "Spectrum with Response", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	TH1F response_spectrum_FEP("response_spectrum_FEP", "Spectrum with Response, normalized to FEP", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
 
 	/************ Start ROOT application *************/
 
@@ -132,9 +135,10 @@ int main(int argc, char* argv[]){
 
 	cout << "> Adding response to spectrum ..." << endl;
 	if(arguments.statistics){
-		reconstructor.addRealisticResponse(spectrum, inverse_n_simulated_particles, response_matrix, response_spectrum);
+		reconstructor.addRealisticResponse(spectrum, inverse_n_simulated_particles, response_matrix, response_spectrum, response_spectrum_FEP);
+		fitter.remove_negative(response_spectrum);
 	} else{
-		reconstructor.addResponse(spectrum, inverse_n_simulated_particles, response_matrix, response_spectrum);
+		reconstructor.addResponse(spectrum, inverse_n_simulated_particles, response_matrix, response_spectrum, response_spectrum_FEP);
 	}
 
 	/************ Plot results *************/
@@ -143,10 +147,17 @@ int main(int argc, char* argv[]){
 	if(arguments.interactive_mode){
 		cout << "> Creating plots ..." << endl;
 
-		response_spectrum.SetLineColor(kBlack);
-		response_spectrum.Draw();
+		c1.Divide(1, 2);
+
+		c1.cd(1);
+		response_spectrum_FEP.SetLineColor(kBlack);
+		response_spectrum_FEP.Draw();
 		spectrum.SetLineColor(kGreen);
 		spectrum.Draw("same");
+
+		c1.cd(2);
+		response_spectrum.SetLineColor(kBlack);
+		response_spectrum.Draw();
 	}
 
 	/************ Write results to file *************/
@@ -158,6 +169,7 @@ int main(int argc, char* argv[]){
 
 	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
 	spectrum.Write();
+	response_spectrum_FEP.Write();
 	response_spectrum.Write();
 
 	outputfile.Close();

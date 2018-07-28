@@ -19,7 +19,7 @@ OBJ_CONVERTER = $(patsubst %,$(OBJDIR)/%,$(_OBJ_CONVERTER))
 _OBJ_MATRIX = MakeMatrix.o InputFileReader.o
 OBJ_MATRIX = $(patsubst %,$(OBJDIR)/%,$(_OBJ_MATRIX))
 
-_OBJ_TSROH = InputFileReader.o Reconstructor.o tsroh.o
+_OBJ_TSROH = FitFunction.o Fitter.o InputFileReader.o Reconstructor.o tsroh.o
 OBJ_TSROH = $(patsubst %,$(OBJDIR)/%,$(_OBJ_TSROH))
 
 _OBJ = FitFunction.o Fitter.o horst.o InputFileReader.o Reconstructor.o Uncertainty.o

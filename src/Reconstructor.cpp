@@ -15,6 +15,8 @@
     along with Horst.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <TRandom3.h>
+
 #include "Config.h"
 #include "Reconstructor.h"
 
@@ -49,6 +51,63 @@ void Reconstructor::addResponse(const TH1F &spectrum, const TH1F &inverse_n_simu
 	}
 }
 
+void Reconstructor::addResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum, TH1F &response_spectrum_FEP){
+	
+	Double_t factor = 1.;
+	Double_t factor_without_efficiency = 1.;
+
+	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		response_spectrum.SetBinContent(i, 0.);
+	}
+
+	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		factor = spectrum.GetBinContent(i)/rema.GetBinContent(i, i)*inverse_n_simulated_particles.GetBinContent(i);
+		factor_without_efficiency = spectrum.GetBinContent(i)/rema.GetBinContent(i, i);
+
+		for(Int_t j = i; j > 0; --j){
+			response_spectrum.SetBinContent(j, response_spectrum.GetBinContent(j) + factor*rema.GetBinContent(i, j));
+			response_spectrum_FEP.SetBinContent(j, response_spectrum_FEP.GetBinContent(j) + factor_without_efficiency*rema.GetBinContent(i, j));
+		}
+	}
+}
+
 void Reconstructor::addRealisticResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum){
+
+	Double_t factor = 1.;
+	TRandom3 rand;
+
+	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		response_spectrum.SetBinContent(i, 0.);
+	}
+
+	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		factor = spectrum.GetBinContent(i)/rema.GetBinContent(i, i)*inverse_n_simulated_particles.GetBinContent(i);
+
+		for(Int_t j = i; j > 0; --j){
+			response_spectrum.SetBinContent(j, response_spectrum.GetBinContent(j) + rand.Gaus(factor*rema.GetBinContent(i, j), sqrt(factor*rema.GetBinContent(i, j))));
+		}
+	}
+
+}
+
+void Reconstructor::addRealisticResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum, TH1F &response_spectrum_FEP){
+
+	Double_t factor = 1.;
+	Double_t factor_without_efficiency = 1.;
+	TRandom3 rand;
+
+	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		response_spectrum.SetBinContent(i, 0.);
+	}
+
+	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		factor = spectrum.GetBinContent(i)/rema.GetBinContent(i, i)*inverse_n_simulated_particles.GetBinContent(i);
+		factor_without_efficiency = spectrum.GetBinContent(i)/rema.GetBinContent(i, i);
+
+		for(Int_t j = i; j > 0; --j){
+			response_spectrum.SetBinContent(j, response_spectrum.GetBinContent(j) + rand.Gaus(factor*rema.GetBinContent(i, j), sqrt(factor*rema.GetBinContent(i, j))));
+			response_spectrum_FEP.SetBinContent(j, response_spectrum_FEP.GetBinContent(j) + rand.Gaus(factor_without_efficiency*rema.GetBinContent(i, j), sqrt(factor*rema.GetBinContent(i, j))));
+		}
+	}
 
 }
