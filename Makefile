@@ -31,7 +31,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 all: $(EXE) $(EXE_MATRIX) $(EXE_CONVERTER) $(EXE_TSROH)
 
 debug: CPPFLAGS += -g -Wconversion -Wsign-conversion
-debug: $(EXE) $(EXE_MATRIX) $(EXE_CONVERTER)
+debug: $(EXE) $(EXE_MATRIX) $(EXE_CONVERTER) $(EXE_TSROH)
 
 $(EXE_CONVERTER): $(OBJ_CONVERTER) 
 	$(CPP) -o $@ $^ $(CPPFLAGS) $(ROOTFLAGS)

@@ -43,7 +43,7 @@ void Reconstructor::addResponse(const TH1F &spectrum, const TH1F &inverse_n_simu
 	}
 
 	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
-		factor = spectrum.GetBinContent(i)/rema.GetBinContent(i, i)*inverse_n_simulated_particles.GetBinContent(i);
+		factor = spectrum.GetBinContent(i)*inverse_n_simulated_particles.GetBinContent(i);
 
 		for(Int_t j = i; j > 0; --j){
 			response_spectrum.SetBinContent(j, response_spectrum.GetBinContent(j) + factor*rema.GetBinContent(i, j));
@@ -61,12 +61,12 @@ void Reconstructor::addResponse(const TH1F &spectrum, const TH1F &inverse_n_simu
 	}
 
 	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
-		factor = spectrum.GetBinContent(i)/rema.GetBinContent(i, i)*inverse_n_simulated_particles.GetBinContent(i);
-		factor_without_efficiency = spectrum.GetBinContent(i)/rema.GetBinContent(i, i);
+		factor = spectrum.GetBinContent(i)*inverse_n_simulated_particles.GetBinContent(i);
+		factor_without_efficiency = spectrum.GetBinContent(i)/rema.GetBinContent(i,i);
 
 		for(Int_t j = i; j > 0; --j){
 			response_spectrum.SetBinContent(j, response_spectrum.GetBinContent(j) + factor*rema.GetBinContent(i, j));
-			response_spectrum_FEP.SetBinContent(j, response_spectrum_FEP.GetBinContent(j) + factor_without_efficiency*rema.GetBinContent(i, j));
+			response_spectrum_FEP.SetBinContent(j, response_spectrum_FEP.GetBinContent(j) + factor_without_efficiency*rema.GetBinContent(i,j));
 		}
 	}
 }
@@ -81,7 +81,7 @@ void Reconstructor::addRealisticResponse(const TH1F &spectrum, const TH1F &inver
 	}
 
 	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
-		factor = spectrum.GetBinContent(i)/rema.GetBinContent(i, i)*inverse_n_simulated_particles.GetBinContent(i);
+		factor = spectrum.GetBinContent(i)*inverse_n_simulated_particles.GetBinContent(i);
 
 		for(Int_t j = i; j > 0; --j){
 			response_spectrum.SetBinContent(j, response_spectrum.GetBinContent(j) + rand.Gaus(factor*rema.GetBinContent(i, j), sqrt(factor*rema.GetBinContent(i, j))));
@@ -101,7 +101,7 @@ void Reconstructor::addRealisticResponse(const TH1F &spectrum, const TH1F &inver
 	}
 
 	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
-		factor = spectrum.GetBinContent(i)/rema.GetBinContent(i, i)*inverse_n_simulated_particles.GetBinContent(i);
+		factor = spectrum.GetBinContent(i)*inverse_n_simulated_particles.GetBinContent(i);
 		factor_without_efficiency = spectrum.GetBinContent(i)/rema.GetBinContent(i, i);
 
 		for(Int_t j = i; j > 0; --j){
@@ -109,5 +109,4 @@ void Reconstructor::addRealisticResponse(const TH1F &spectrum, const TH1F &inver
 			response_spectrum_FEP.SetBinContent(j, response_spectrum_FEP.GetBinContent(j) + rand.Gaus(factor_without_efficiency*rema.GetBinContent(i, j), sqrt(factor*rema.GetBinContent(i, j))));
 		}
 	}
-
 }
