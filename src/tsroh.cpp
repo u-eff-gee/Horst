@@ -38,6 +38,7 @@ using std::vector;
 using std::stringstream;
 
 struct Arguments{
+	UInt_t binning = 10;
 	TString spectrumfile = "";
 	TString matrixfile = "";
 	TString outputfile = "output.root";
@@ -49,6 +50,7 @@ static char doc[] = "Tsroh, Transfer spectroscopic response to histogram";
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
+	{"binning", 'b', "arguments.binning", 0, "Rebinning factor for input histograms (default: 10)", 0},
 	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix", 0},
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
@@ -61,8 +63,9 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 
 	switch (key){
 		case ARGP_KEY_ARG: arguments->spectrumfile = arg; break;
-		case 'o': arguments->outputfile = arg; break;
+		case 'b': arguments->binning= atoi(arg); break;
 		case 'm': arguments->matrixfile= arg; break;
+		case 'o': arguments->outputfile = arg; break;
 		case 'i': arguments->interactive_mode= true; break;
 		case 's': arguments->statistics= true; break;
 		case ARGP_KEY_END:
@@ -93,9 +96,9 @@ int main(int argc, char* argv[]){
 
 	/************ Initialize auxiliary classes *************/
 
-	InputFileReader inputFileReader;
-	Reconstructor reconstructor;
-	Fitter fitter;
+	InputFileReader inputFileReader(arguments.binning);
+	Reconstructor reconstructor(arguments.binning);
+	Fitter fitter(arguments.binning);
 
 	/************ Initialize histograms *************/
 
@@ -107,8 +110,8 @@ int main(int argc, char* argv[]){
 
 	// Output
 	
-	TH1F response_spectrum("response_spectrum", "Spectrum with Response", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	TH1F response_spectrum_FEP("response_spectrum_FEP", "Spectrum with Response, normalized to FEP", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
+	TH1F response_spectrum("response_spectrum", "Spectrum with Response", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F response_spectrum_FEP("response_spectrum_FEP", "Spectrum with Response, normalized to FEP", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
 
 	/************ Start ROOT application *************/
 
@@ -122,14 +125,14 @@ int main(int argc, char* argv[]){
 
 	cout << "> Reading spectrum file " << arguments.spectrumfile << " ..." << endl;
 	inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
-	spectrum.Rebin(BINNING);
+	spectrum.Rebin(arguments.binning);
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
-	response_matrix.Rebin2D(BINNING, BINNING);
-	n_simulated_particles.Rebin(BINNING);
+	response_matrix.Rebin2D(arguments.binning, arguments.binning);
+	n_simulated_particles.Rebin(arguments.binning);
 
-	for(Int_t i = 0; i <= (Int_t) NBINS/(Int_t) BINNING; ++i)
+	for(Int_t i = 0; i <= (Int_t) NBINS/(Int_t) arguments.binning; ++i)
 		inverse_n_simulated_particles.SetBinContent(i, 1./n_simulated_particles.GetBinContent(i));
 
 	/************ Add response to experimental spectrum *************/

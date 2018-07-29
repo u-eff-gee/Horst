@@ -76,7 +76,7 @@ int main(int argc, char* argv[]){
 	vector<Double_t> energies;
 	vector<Double_t> n_simulated_particles;
 
-	InputFileReader inputFileReader;
+	InputFileReader inputFileReader(1);
 	inputFileReader.readInputFile(arguments.inputfile, filenames, energies, n_simulated_particles);
 
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));

@@ -30,10 +30,11 @@ using namespace std;
 int main(int argc, char* argv[]){
 
 	if(argc != 2){
-		cout << "Error: Script needs exactily one argument, which is the name of the ROOT file that contains the histograms. Aborting ..." << endl;
+		cout << "Error: Script needs exactily two arguments. The first is the name of the ROOT file that contains the histograms. The second is the binning factor of the histograms. Aborting ..." << endl;
 		abort();
 	}
 	TString filename = argv[1];
+	UInt_t BINNING = (UInt_t) atoi(argv[2]);
 
 	// Open TFile
 	TFile *f = new TFile(filename);

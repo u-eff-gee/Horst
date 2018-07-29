@@ -27,7 +27,7 @@ using std::vector;
 
 class InputFileReader{
 public:
-	InputFileReader(){};
+	InputFileReader(const UInt_t binning):BINNING(binning){};
 	~InputFileReader(){};
 
 	void readInputFile(const TString inputfilename, vector<TString> &filenames, vector<Double_t> &energies, vector<Double_t> &n_simulated_particles);
@@ -38,6 +38,9 @@ public:
 	void readMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const TString matrixfile);
 
 	void readTxtSpectrum(TH1F &spectrum, const TString spectrumfile);
+
+private:
+	const UInt_t BINNING;
 };
 
 #endif

@@ -22,8 +22,9 @@
 
 class FitFunction{
 	public:
-		FitFunction(const TH2F &rema, Int_t binstart, Int_t binstop): 
+		FitFunction(const TH2F &rema, const UInt_t binning, Int_t binstart, Int_t binstop): 
 			response_matrix(rema),
+			BINNING(binning),
 			bin_start(binstart),
 			bin_stop(binstop)
 	{};
@@ -33,9 +34,10 @@ class FitFunction{
 		Double_t getSpectrumStatisticalUncertainty(const Int_t bin, const TH1F &params, const TH1F &spectrum);
 
 	private:
-		TH2F response_matrix;
-		Int_t bin_start;
-		Int_t bin_stop;
+		const TH2F response_matrix;
+		const UInt_t BINNING;
+		const Int_t bin_start;
+		const Int_t bin_stop;
 };
 
 #endif

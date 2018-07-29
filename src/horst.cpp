@@ -40,6 +40,7 @@ using std::vector;
 using std::stringstream;
 
 struct Arguments{
+	UInt_t binning = 10;
 	TString spectrumfile = "";
 	TString matrixfile = "";
 	TString outputfile = "output.root";
@@ -53,6 +54,7 @@ static char doc[] = "Horst, HIGS original reconstruction spectrum tool";
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
+	{"binning", 'b', "arguments.binning", 0, "Rebinning factor for input histograms (default: 10)", 0},
 	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix", 0},
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"left", 'l', "LEFT", 0, "Left limit of fit range", 0},
@@ -67,8 +69,9 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 
 	switch (key){
 		case ARGP_KEY_ARG: arguments->spectrumfile = arg; break;
-		case 'o': arguments->outputfile = arg; break;
+		case 'b': arguments->binning= atoi(arg); break;
 		case 'm': arguments->matrixfile= arg; break;
+		case 'o': arguments->outputfile = arg; break;
 		case 'l': arguments->left= (UInt_t) atoi(arg); break;
 		case 'r': arguments->right= (UInt_t) atoi(arg); break;
 		case 'i': arguments->interactive_mode= true; break;
@@ -101,9 +104,9 @@ int main(int argc, char* argv[]){
 
 	/************ Initialize auxiliary classes *************/
 
-	InputFileReader inputFileReader;
-	Fitter fitter;
-	Reconstructor reconstructor;
+	InputFileReader inputFileReader(arguments.binning);
+	Fitter fitter(arguments.binning);
+	Reconstructor reconstructor(arguments.binning);
 
 	/************ Initialize histograms *************/
 
@@ -113,27 +116,27 @@ int main(int argc, char* argv[]){
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
 
 	// TopDown algorithm
-	TH1F topdown_params("topdown_params", "TopDown Parameters", NBINS/BINNING, 0., (Double_t) NBINS - 1);
-	TH1F topdown_FEP("topdown_FEP", "TopDown FEP", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_fit("topdown_fit", "TopDown Fit", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_simulation_uncertainty("topdown_simulation_uncertainty", "TopDown Simulation Uncertainty", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_total_uncertainty("topdown_total_uncertainty", "TopDown Total Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F topdown_params("topdown_params", "TopDown Parameters", NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F topdown_FEP("topdown_FEP", "TopDown FEP", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_fit("topdown_fit", "TopDown Fit", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_simulation_uncertainty("topdown_simulation_uncertainty", "TopDown Simulation Uncertainty", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_total_uncertainty("topdown_total_uncertainty", "TopDown Total Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
 
 	// Fit
-	TH1F fit_params("fit_params", "Fit Parameters", NBINS/BINNING, 0., (Double_t) NBINS - 1);
-	TH1F fit_uncertainty("fit_uncertainty", "Fit Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
-	TH1F fit_FEP("fit_FEP", "Fit FEP", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	TH1F fit_result("fit_result", "Fit Result", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	TH1F fit_simulation_uncertainty("fit_simulation_uncertainty", "Fit Simulation Uncertainty", (Int_t) NBINS/ (Int_t) BINNING, 0., (Double_t) NBINS - 1);
-	TH1F fit_spectrum_uncertainty("fit_spectrum_uncertainty", "Spectrum Uncertainty", (Int_t) NBINS/ (Int_t) BINNING, 0., (Double_t) NBINS - 1);
-	TH1F fit_total_uncertainty("fit_total_uncertainty", "Total Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F fit_params("fit_params", "Fit Parameters", NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F fit_uncertainty("fit_uncertainty", "Fit Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F fit_FEP("fit_FEP", "Fit FEP", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F fit_result("fit_result", "Fit Result", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F fit_simulation_uncertainty("fit_simulation_uncertainty", "Fit Simulation Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F fit_spectrum_uncertainty("fit_spectrum_uncertainty", "Spectrum Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F fit_total_uncertainty("fit_total_uncertainty", "Total Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
 
-	TH1F spectrum_reconstructed("spectrum_reconstructed", "Spectrum Reconstructed", NBINS/BINNING, 0., (Double_t) NBINS - 1); 
-	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
-	TH1F reconstruction_uncertainty_low("reconstruction_uncertainty_low", "Reconstruction Uncertainty lower Limit", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
-	TH1F reconstruction_uncertainty_up("reconstruction_uncertainty_up", "Reconstruction Uncertainty upper Limit", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F spectrum_reconstructed("spectrum_reconstructed", "Spectrum Reconstructed", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F reconstruction_uncertainty_low("reconstruction_uncertainty_low", "Reconstruction Uncertainty lower Limit", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F reconstruction_uncertainty_up("reconstruction_uncertainty_up", "Reconstruction Uncertainty upper Limit", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
 
 	/************ Start ROOT application *************/
 
@@ -147,25 +150,25 @@ int main(int argc, char* argv[]){
 
 	cout << "> Reading spectrum file " << arguments.spectrumfile << " ..." << endl;
 	inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
-	spectrum.Rebin(BINNING);
+	spectrum.Rebin(arguments.binning);
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
-	response_matrix.Rebin2D(BINNING, BINNING);
-	n_simulated_particles.Rebin(BINNING);
+	response_matrix.Rebin2D(arguments.binning, arguments.binning);
+	n_simulated_particles.Rebin(arguments.binning);
 
 	/************ Use Top-Down unfolding to get start parameters *************/
 
 	cout << "> Unfold spectrum using top-down algorithm ..." << endl;
-	fitter.topdown(spectrum, response_matrix, topdown_params, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
+	fitter.topdown(spectrum, response_matrix, topdown_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
 
 	fitter.fittedFEP(topdown_params, response_matrix, topdown_FEP);
 	fitter.fittedSpectrum(topdown_params, response_matrix, topdown_fit);
 
 	reconstructor.reconstruct(topdown_params, n_simulated_particles, topdown_spectrum_reconstructed);
 
-	Uncertainty uncertainty;
-	uncertainty.getUncertainty(topdown_params, spectrum, response_matrix, topdown_simulation_uncertainty, topdown_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
+	Uncertainty uncertainty(arguments.binning);
+	uncertainty.getUncertainty(topdown_params, spectrum, response_matrix, topdown_simulation_uncertainty, topdown_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
 
 	vector<TH1F*> topdown_uncertainties(2);
 	topdown_uncertainties[0] = &topdown_simulation_uncertainty;
@@ -179,14 +182,14 @@ int main(int argc, char* argv[]){
 
 	cout << "> Fit spectrum using TopDown parameters as start parameters ..." << endl;
 
-	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING, arguments.verbose);
+	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning, arguments.verbose);
 
 	fitter.fittedFEP(fit_params, response_matrix, fit_FEP);
 	fitter.fittedSpectrum(fit_params, response_matrix, fit_result);
 
 	reconstructor.reconstruct(fit_params, n_simulated_particles, spectrum_reconstructed);
 
-	uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) BINNING, (Int_t) arguments.right/ (Int_t) BINNING);
+	uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
 
 	vector<TH1F*> uncertainties(3);
 	uncertainties[0] = &fit_uncertainty;

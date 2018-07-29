@@ -47,7 +47,7 @@ void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t
 
 void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit_uncertainty, Int_t binstart, Int_t binstop, const Bool_t verbose){
 
-	FitFunction fitFunction(rema, binstart, binstop);
+	FitFunction fitFunction(rema, BINNING, binstart, binstop);
 	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, NBINS/BINNING);
 
 	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
@@ -82,7 +82,7 @@ void Fitter::fittedFEP(const TH1F &params, const TH2F &rema, TH1F &fitted_FEP){
 
 void Fitter::fittedSpectrum(const TH1F &params, const TH2F &rema, TH1F &fitted_spectrum){
 
-	FitFunction fitFunction(rema, 0, (Int_t) NBINS/BINNING);	
+	FitFunction fitFunction(rema, BINNING, 0, (Int_t) NBINS/BINNING);	
 
 	vector<Double_t> parameters((Int_t) NBINS/ (Int_t) BINNING + 1);
 	for(Int_t i = 1; i <= (Int_t) NBINS/ (Int_t) BINNING; ++i)

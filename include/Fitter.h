@@ -24,7 +24,7 @@
 
 class Fitter{
 public:
-	Fitter(){};
+	Fitter(const UInt_t binning):BINNING(binning){};
 	~Fitter(){};
 
 	void topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t binstart, Int_t binstop);
@@ -32,6 +32,9 @@ public:
 	void fittedFEP(const TH1F &params, const TH2F &rema, TH1F &fitted_FEP);
 	void fittedSpectrum(const TH1F &params, const TH2F &rema, TH1F &fitted_spectrum);
 	void remove_negative(TH1F &hist);
+
+private:
+	const UInt_t BINNING;
 };
 
 #endif

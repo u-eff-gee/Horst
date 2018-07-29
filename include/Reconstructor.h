@@ -24,7 +24,7 @@
 
 class Reconstructor{
 public:
-	Reconstructor(){};
+	Reconstructor(const UInt_t binning): BINNING(binning){};
 	~Reconstructor(){};
 
 	void reconstruct(const TH1F &params, const TH1F &n_simulated_particles, TH1F &reconstructed_spectrum);
@@ -35,6 +35,9 @@ public:
 
 	void addRealisticResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum);
 	void addRealisticResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum, TH1F &response_spectrum_FEP);
+
+private:
+	const UInt_t BINNING;
 };
 
 #endif
