@@ -109,8 +109,9 @@ void InputFileReader::writeMatrix(TH2F &response_matrix, TH1F &n_simulated_parti
 
 void InputFileReader::readMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const TString matrixfile){
 
-	TFile *inputFile = new TFile(matrixfile);
+	TFile *inputFile = new TFile(matrixfile); 
 	TH2F *rema = (TH2F*) gDirectory->Get("rema");
+
 	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
 		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
 			response_matrix.SetBinContent(i, j, rema->GetBinContent(i, j));
@@ -137,5 +138,17 @@ void InputFileReader::readTxtSpectrum(TH1F &spectrum, const TString spectrumfile
 			spectrum.SetBinContent(index, atof(line.c_str()));
 			++index;
 		}
+	}
+}
+
+void InputFileReader::readROOTSpectrum(TH1F &spectrum, const TString spectrumfile, const TString spectrumname){
+	
+	TFile file;
+	file.Open(spectrumfile, "READ");
+
+	TH1F *spec= (TH1F*) gDirectory->Get(spectrumname);
+
+	for(Int_t i = 0; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		spectrum.SetBinContent(i, spec->GetBinContent(i));
 	}
 }

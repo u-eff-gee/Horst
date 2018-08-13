@@ -42,11 +42,13 @@ using std::stringstream;
 struct Arguments{
 	UInt_t binning = 10;
 	TString spectrumfile = "";
+	TString spectrumname = "";
 	TString matrixfile = "";
 	TString outputfile = "output.root";
 	UInt_t left = 0;
 	UInt_t right = NBINS;
 	Bool_t interactive_mode = false;
+	Bool_t tfile = false;
 	Bool_t verbose = false;
 };
 
@@ -54,12 +56,13 @@ static char doc[] = "Horst, HIGS original reconstruction spectrum tool";
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
-	{"binning", 'b', "arguments.binning", 0, "Rebinning factor for input histograms (default: 10)", 0},
+	{"binning", 'b', "BINNING", 0, "Rebinning factor for input histograms (default: 10)", 0},
 	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix", 0},
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"left", 'l', "LEFT", 0, "Left limit of fit range", 0},
 	{"right", 'r', "RIGHT", 0, "Right limit of fit range", 0},
 	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
+	{"tfile", 't', "SPECTRUM", 0, "Read SPECTRUM from a ROOT file called INPUTFILENAME, instead from a text file.", 0},
 	{"verbose", 'v', 0, 0, "Enable ROOT to print verbose information about the fitting process", 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
@@ -75,6 +78,7 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'l': arguments->left= (UInt_t) atoi(arg); break;
 		case 'r': arguments->right= (UInt_t) atoi(arg); break;
 		case 'i': arguments->interactive_mode= true; break;
+		case 't': arguments->tfile = true; arguments->spectrumname = arg; break;
 		case 'v': arguments->verbose = true; break;
 		case ARGP_KEY_END:
 			if(state->arg_num == 0){
@@ -149,8 +153,12 @@ int main(int argc, char* argv[]){
 	/************ Read and rebin spectrum and response matrix *************/
 
 	cout << "> Reading spectrum file " << arguments.spectrumfile << " ..." << endl;
-	inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
-	spectrum.Rebin(arguments.binning);
+	if(arguments.tfile)
+		inputFileReader.readROOTSpectrum(spectrum, arguments.spectrumfile, arguments.spectrumname);
+	else{
+		inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
+		spectrum.Rebin(arguments.binning);
+	}
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
@@ -229,14 +237,15 @@ int main(int argc, char* argv[]){
 		spectrum.Draw("same");
 
 		c1.cd(4);
-		reconstruction_uncertainty_up.SetFillColor(kGray);
-		reconstruction_uncertainty_up.SetLineColor(kBlack);
-		reconstruction_uncertainty_up.Draw("same");
-		reconstruction_uncertainty_low.SetLineColor(kBlack);
-		reconstruction_uncertainty_low.SetFillColor(10);
-		reconstruction_uncertainty_low.Draw("same");
-		topdown_spectrum_reconstructed.SetLineColor(kOrange);
-		topdown_spectrum_reconstructed.Draw("same");
+		reconstruction_uncertainty_up.SetFillColor(kGray); 
+		reconstruction_uncertainty_up.SetLineColor(kBlack); 
+		reconstruction_uncertainty_up.Draw("same"); 
+		reconstruction_uncertainty_low.SetLineColor(kBlack); 
+		reconstruction_uncertainty_low.SetFillColor(10); 
+		reconstruction_uncertainty_low.Draw("same"); 
+		spectrum_reconstructed.SetLineColor(kBlack); 
+		spectrum_reconstructed.SetLineWidth(2); 
+		spectrum_reconstructed.Draw("same");
 	}
 
 	/************ Write results to file *************/

@@ -40,13 +40,15 @@ using std::stringstream;
 struct Arguments{
 	UInt_t binning = 10;
 	TString spectrumfile = "";
+	TString spectrumname = "";
 	TString matrixfile = "";
 	TString outputfile = "output.root";
 	Bool_t interactive_mode = false;
 	Bool_t statistics = false;
+	Bool_t tfile = false;
 };
 
-static char doc[] = "Tsroh, Transfer spectroscopic response to histogram";
+static char doc[] = "Tsroh, Transfer spectroscopic response on histogram";
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
@@ -55,6 +57,7 @@ static struct argp_option options[] = {
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
 	{"statistics", 's', 0, 0, "Add statistical fluctuations to response (switched off by default)", 0},
+	{"tfile", 't', "SPECTRUM", 0, "Read SPECTRUM from a ROOT file called INPUTFILENAME, instead from a text file.", 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
 
@@ -68,6 +71,7 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'o': arguments->outputfile = arg; break;
 		case 'i': arguments->interactive_mode= true; break;
 		case 's': arguments->statistics= true; break;
+		case 't': arguments->tfile = true; arguments->spectrumname = arg; break;
 		case ARGP_KEY_END:
 			if(state->arg_num == 0){
 				argp_usage(state);
@@ -124,8 +128,12 @@ int main(int argc, char* argv[]){
 	/************ Read and rebin spectrum and response matrix *************/
 
 	cout << "> Reading spectrum file " << arguments.spectrumfile << " ..." << endl;
-	inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
-	spectrum.Rebin(arguments.binning);
+	if(arguments.tfile)
+		inputFileReader.readROOTSpectrum(spectrum, arguments.spectrumfile, arguments.spectrumname);
+	else{
+		inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
+		spectrum.Rebin(arguments.binning);
+	}
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);

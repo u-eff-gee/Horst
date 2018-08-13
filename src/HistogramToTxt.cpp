@@ -29,7 +29,7 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
-	if(argc != 2){
+	if(argc != 3){
 		cout << "Error: Script needs exactily two arguments. The first is the name of the ROOT file that contains the histograms. The second is the binning factor of the histograms. Aborting ..." << endl;
 		abort();
 	}

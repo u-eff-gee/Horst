@@ -38,6 +38,8 @@ public:
 	void readMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const TString matrixfile);
 
 	void readTxtSpectrum(TH1F &spectrum, const TString spectrumfile);
+	
+	void readROOTSpectrum(TH1F &spectrum, const TString spectrumfile, const TString spectrumname);
 
 private:
 	const UInt_t BINNING;
