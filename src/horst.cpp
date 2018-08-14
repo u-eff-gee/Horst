@@ -52,7 +52,7 @@ struct Arguments{
 	Bool_t verbose = false;
 };
 
-static char doc[] = "Horst, HIGS original reconstruction spectrum tool";
+static char doc[] = "Horst, Histogram original reconstruction spectrum tool";
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
