@@ -18,3 +18,9 @@ horst
 makematrix
 convert_to_txt
 tsroh
+
+# LaTex output
+doc/doc.aux
+doc/doc.log
+doc/doc.pdf
+doc/doc.toc

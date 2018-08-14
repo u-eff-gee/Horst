@@ -1,0 +1,174 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+
+\begin{document}
+
+\begin{titlepage}
+\Huge
+	\textbf{How Horst Works}
+\end{titlepage}
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+This document describes briefly how the reconstruction of original spectra can be done and how it is implemented in \textbf{Horst}.
+
+\section{Continous spectrum}
+First, treat the particle spectrum $s(E)$ as a continous function of the energy $E$. 
+The detected spectrum will be denoted as $\tilde{s}(E)$.
+
+The content of the detected spectrum at an energy $E$ is related to the original spectrum at an energy by a convolution with the detector response function $r(E, E')$:
+
+\begin{equation}
+\label{convolution_continuous}
+	\tilde{s}(E) = \int r(E, E') \cdot s(E') \mathrm{d}E' 
+\end{equation}
+
+The two arguments of $r$ mean that, in principle, any energy of the detected spectrum can be influenced by any energy of the original spectrum.
+The diagonal elements $r(E,E)$ are commonly referred to as the detection efficiency, or the full-energy peak (FEP) efficiency.
+For a detector with negligible noise and pileup, 
+
+\begin{equation}
+	\label{response_condition}
+	r(E, E') = 0 ~\mathrm{if}~ E > E'
+\end{equation}
+
+i.e. a detector will, at maximum, detect the full energy of a particle, and not more. This is also assumed in the code.
+
+\section{Histograms}
+In reality, one almost never measures continous spectra, but they will be binned in some way.
+Denoting all quantities with square brackets instead of braces and variables with an index in order to indicates discrete values, Eq. \ref{convolution_continuous} becomes:
+
+\begin{equation}
+	\label{convolution_discrete}
+	\tilde{s}[E_i] = \sum_{j = 0}^{N} r[E_i][E_j] \cdot s[E_j]
+\end{equation}
+
+The convolution of the response function on the spectrum has now become the action of an $N \times N$ matrix on a vector with $N$ entries:
+
+\begin{equation}
+	\label{matrix_equation_general}
+	\tilde{s} = r \cdot s = 
+\end{equation}
+
+\begin{equation}
+	\label{matrix_equation_explicit}
+	\left[ 
+		\begin{array}{c}
+			\tilde{s}[0] \\
+			\tilde{s}[1] \\
+			\vdots	\\
+			\tilde{s}[N] \\
+		\end{array}
+	\right]
+	= 
+	\begin{bmatrix}
+		r[0][0] & r[0][1] & \hdots & r[0][N] \\
+		r[1][0] & r[0][1] & \vdots & r[1][N] \\
+		\vdots  & \vdots  & \vdots & \vdots  \\
+		r[N][0] & r[N][1] & \hdots & r[N][N] \\
+	\end{bmatrix}
+	\cdot
+	\left[ 
+		\begin{array}{c}
+			s[0] \\
+			s[1] \\
+			\vdots	\\
+			s[N] \\
+		\end{array}
+	\right]
+\end{equation}
+
+\section{Solving for the original spectrum}
+
+The idealized problem in Eq. \ref{matrix_equation_general} can in principle be solved by inversion of the matrix $r$:
+
+\begin{equation}
+	\label{matrix_equation_solved}
+	r^{-1} \cdot \tilde{s} = s
+\end{equation}
+
+Note that, in a real detection experiment, there is the influence of counting statistics, which causes the bin contents of $\tilde{s}$ to deviate from the true value by a factor $\epsilon$:
+
+\begin{equation}
+	\label{matrix_equation_statistics}
+	\tilde{s} + \epsilon \approx r \cdot s
+\end{equation}
+
+Admitting statistical fluctiations, the equality of the two parts of the equation does not hold any more.
+However, equality will be assumed in the following, i.e. it is assumed that statistics are high enough so that the fluctuations do not matter too much.
+This would mean that Eq. \ref{matrix_equation_general} can still be solved by inversion.
+
+However, the brute-force solution by inversion can be greatly simplified by applying Eq. \ref{response_condition} in discretized form. 
+Then, the matrix in Eq. \ref{matrix_equation_general} becomes an upper triangular matrix:
+
+\begin{equation}
+	\label{matrix_equation_triangle_explicit}
+	\left[ 
+		\begin{array}{c}
+			\tilde{s}[0] \\
+			\tilde{s}[1] \\
+			\vdots	\\
+			\tilde{s}[N] \\
+		\end{array}
+	\right]
+	= 
+	\begin{bmatrix}
+		r[0][0] & r[0][1] & \hdots & r[0][N] \\
+		0       & r[1][1] & \vdots & r[1][N] \\
+		\vdots  & \ddots  & \ddots & \vdots  \\
+		0       & 0       & \ddots & r[N][N] \\
+	\end{bmatrix}
+	\cdot
+	\left[ 
+		\begin{array}{c}
+			s[0] \\
+			s[1] \\
+			\vdots	\\
+			s[N] \\
+		\end{array}
+	\right]
+\end{equation}
+
+This problem is much easier to solve than with a completely general matrix.
+The solution algorithm is based on Gaussian elimination and sometimes called the TopDown algorithm in this context.
+It can be visualized as subsequently subtracting the correctly scaled response function of the highest energy bin from the detected spectrum to "peel away" the response and leave only the original spectrum.
+
+Its starting steps are:
+
+\begin{enumerate}
+	\item{Starting at the lower right edge (highest energy), solve the trivial equation $\tilde{s}[N] = r[N][N] \cdot s[N]$ to scale the full-energy peak of the response function to the detected spectrum. 
+		The scaling factor $r[N[N]/\tilde{s}[N]$ is the content of bin $N$ in the original spectrum.}
+	\item{Multiply the corresponding column $N$ of the response matrix with the factor and subtract it on both sides of the equation. The highest energy bin of $s$ is now a zero, i.e. the outermost column $r[][N]$ does not matter any more, as well as the lowest row $r[N][]$.}
+	\item{Proceed with the equation in row $N-1$ as in the first step, because this one has now become trivial.}
+	\item{...}
+\end{enumerate}
+
+This algorithm, like all direct solutions of Eq. \ref{matrix_equation_general} have the drawback that they can yield unphysical results, i.e. negative bin contents, because the simulated response is not perfect, the statistical effects cumulate, or the energy calibration of the detected spectrum is not perfect.
+This can be overcome by imposing the condition
+
+\begin{equation}
+	\label{no_zeros}
+	\tilde{s}[i] >= 0 ~ \forall ~ i
+\end{equation}
+
+which turns the matrix inversion into a minimization problem that can be solved, for example, by applying a least-squares algorithm.
+With a perfect response simulation and no statistical fluctiations, the TopDown algorithm and the fit should yield the same results.
+Assuming that the influence of both effects is not too strong, \textbf{Horst} uses both algorithms: 
+
+First, it solves the problem using the TopDown algorithm. After that, it uses the obtained parameters $s[i]$ as start parameters for a least-squares fit, setting all negative parameters to zero and imposing Eq. \ref{no_zeros}.
+
+\section{Response function}
+In fact, the response matrix comes from a sequence of simulations with a monoenergetic particle beam using $N_\mathrm{sim}$ primary particles (for simplicity, assume that the same number of primary particles has been used in all simulations).
+
+This is why the response matrices of \textbf{Horst} contain entries which are larger than one most of the time, although one would expect that the efficiency should be lower or equal to one for all energies.
+
+Therefore, the correspondence between the fit parameters and the original spectrum is not as direct as stated above, but they need to be multiplied with a factor of $N_\mathrm{sim}$.
+
+If the efficiency of a detector is sufficiently small, this makes it hard to show original and reconstructed spectrum in the same plot.
+Therefore, \textbf{Horst} shows and outputs an additional kind of plot, which shows the fit parameters multiplied with only the full-energy peaks in the simulation.
+This auxiliary histogram will have a comparable order of magnitude as the detected spectrum, however it is not the same as the reconstructed spectrum, not even different from it by only a factor.
+\end{document}
