@@ -107,7 +107,14 @@ int main(int argc, char* argv[]){
 	/************ Initialize histograms *************/
 
 	// Input
-	TH1F spectrum("spectrum", "Input Spectrum", NBINS, 0., (Double_t) NBINS - 1);
+	TH1F spectrum;
+
+	if(arguments.tfile){
+		spectrum = TH1F("spectrum", "Input Spectrum", NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	} else {
+		spectrum = TH1F("spectrum", "Input Spectrum", NBINS, 0., (Double_t) NBINS - 1);
+	}
+
 	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
 	TH1F inverse_n_simulated_particles("inverse_n_simulated_particles", "1 / Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));

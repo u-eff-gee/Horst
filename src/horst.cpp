@@ -115,7 +115,14 @@ int main(int argc, char* argv[]){
 	/************ Initialize histograms *************/
 
 	// Input
-	TH1F spectrum("spectrum", "Input Spectrum", NBINS, 0., (Double_t) NBINS - 1);
+	TH1F spectrum;
+
+	if(arguments.tfile){
+		spectrum = TH1F("spectrum", "Input Spectrum", NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	} else {
+		spectrum = TH1F("spectrum", "Input Spectrum", NBINS, 0., (Double_t) NBINS - 1);
+	}
+
 	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
 
@@ -137,7 +144,7 @@ int main(int argc, char* argv[]){
 	TH1F fit_spectrum_uncertainty("fit_spectrum_uncertainty", "Spectrum Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 	TH1F fit_total_uncertainty("fit_total_uncertainty", "Total Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
 
-	TH1F spectrum_reconstructed("spectrum_reconstructed", "Spectrum Reconstructed", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F spectrum_reconstructed("spectrum_reconstructed", "Reconstructed Spectrum", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
 	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
 	TH1F reconstruction_uncertainty_low("reconstruction_uncertainty_low", "Reconstruction Uncertainty lower Limit", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
 	TH1F reconstruction_uncertainty_up("reconstruction_uncertainty_up", "Reconstruction Uncertainty upper Limit", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
@@ -237,12 +244,16 @@ int main(int argc, char* argv[]){
 		spectrum.Draw("same");
 
 		c1.cd(4);
+		spectrum_reconstructed.SetLineColor(kBlack); 
+		spectrum_reconstructed.SetLineWidth(2); 
+		spectrum_reconstructed.Draw();
 		reconstruction_uncertainty_up.SetFillColor(kGray); 
 		reconstruction_uncertainty_up.SetLineColor(kBlack); 
 		reconstruction_uncertainty_up.Draw("same"); 
 		reconstruction_uncertainty_low.SetLineColor(kBlack); 
 		reconstruction_uncertainty_low.SetFillColor(10); 
 		reconstruction_uncertainty_low.Draw("same"); 
+		// Draw spectrum_reconstructed twice. Once first in the canvas so that it determines the title of the canvas. Second at the end so that it is on top of everything.
 		spectrum_reconstructed.SetLineColor(kBlack); 
 		spectrum_reconstructed.SetLineWidth(2); 
 		spectrum_reconstructed.Draw("same");
