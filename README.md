@@ -27,6 +27,7 @@ In particle detection experiments, the real particle spectrum will be distorted 
 
 * C++11 (minimum)
 * [ROOT 6](https://root.cern.ch/)
+* LaTeX (to build the documentation)
 
 ## 3 Installation <a name="installation"></a>
 
@@ -51,6 +52,15 @@ This should create four executables:
  * `convert_to_txt`: A tool to convert the ROOT output file to text files
 
 The Makefile also supports the commands `make clean` and `make debug`. The latter activates the `-g` compiler option, switches off optimization and prints more warnings (most of the warnings you will see are actually caused by ROOT, not by `Horst`).
+
+The documentation can be built by going to the `doc/` directory and executing `make`: 
+
+```
+$ cd Horst/doc/
+$ make
+```
+
+Also this Makefile contains the `make clean` option.
 
 ## 4 Usage <a name="usage"></a>
 
