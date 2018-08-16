@@ -199,6 +199,8 @@ int main(int argc, char* argv[]){
 
 	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning, arguments.verbose);
 
+	fitter.print_fitresult();
+
 	fitter.fittedFEP(fit_params, response_matrix, fit_FEP);
 	fitter.fittedSpectrum(fit_params, response_matrix, fit_result);
 

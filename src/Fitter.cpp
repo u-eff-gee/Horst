@@ -15,6 +15,7 @@
     along with Horst.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <iostream>
 #include <vector>
 
 #include <TF1.h>
@@ -23,6 +24,8 @@
 #include "FitFunction.h"
 #include "Fitter.h"
 
+using std::cout;
+using std::endl;
 using std::vector;
 
 void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t binstart, Int_t binstop){
@@ -68,6 +71,8 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 		spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
 	}
 
+	chi2 = fitf.GetChisquare();
+
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
 		params.SetBinContent(i, fitf.GetParameter(i-1));
 		fit_uncertainty.SetBinContent(i, fitf.GetParError(i-1)*rema.GetBinContent(i, i));
@@ -102,4 +107,8 @@ void Fitter::remove_negative(TH1F &hist){
 			hist.SetBinContent(i, 0.);
 		}
 	}
+}
+
+void Fitter::print_fitresult() const {
+	cout << "> Fit result: Chi^2 = " << chi2 << endl;
 }

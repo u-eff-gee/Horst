@@ -21,10 +21,11 @@
 #include <TROOT.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <TF1.h>
 
 class Fitter{
 public:
-	Fitter(const UInt_t binning):BINNING(binning){};
+	Fitter(const UInt_t binning):BINNING(binning), chi2(-1.){};
 	~Fitter(){};
 
 	void topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t binstart, Int_t binstop);
@@ -32,9 +33,11 @@ public:
 	void fittedFEP(const TH1F &params, const TH2F &rema, TH1F &fitted_FEP);
 	void fittedSpectrum(const TH1F &params, const TH2F &rema, TH1F &fitted_spectrum);
 	void remove_negative(TH1F &hist);
+	void print_fitresult() const;
 
 private:
 	const UInt_t BINNING;
+	Double_t chi2;
 };
 
 #endif
