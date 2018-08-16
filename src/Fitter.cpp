@@ -63,9 +63,9 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 	}
 
 	if(verbose){
-		spectrum.Fit("fitf", "0N", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
+		spectrum.Fit("fitf", "0N", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
 	} else{
-		spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
+		spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
 	}
 
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
