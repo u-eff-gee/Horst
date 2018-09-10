@@ -110,7 +110,14 @@ void InputFileReader::writeMatrix(TH2F &response_matrix, TH1F &n_simulated_parti
 void InputFileReader::readMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const TString matrixfile){
 
 	TFile *inputFile = new TFile(matrixfile); 
-	TH2F *rema = (TH2F*) gDirectory->Get("rema");
+	TH2F *rema = nullptr;
+
+	if(gDirectory->FindKey("rema")){
+		rema = (TH2F*) gDirectory->Get("rema");
+	} else{
+		cout << __FILE__ << ":" << __FUNCTION__ << "():" << __LINE__ << ": Error: No TH2F object called 'rema' found in '" << matrixfile << "'. Aborting ..." << endl;
+		abort();
+	}
 
 	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
 		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
@@ -118,7 +125,14 @@ void InputFileReader::readMatrix(TH2F &response_matrix, TH1F &n_simulated_partic
 		}
 	}
 
-	TH1F *n_particles = (TH1F*) gDirectory->Get("n_simulated_particles");
+	TH1F *n_particles = nullptr;
+	
+	if(gDirectory->FindKey("n_simulated_particles")){
+		n_particles = (TH1F*) gDirectory->Get("n_simulated_particles");
+	} else{
+		cout << __FILE__ << ":" << __FUNCTION__ << "():" << __LINE__ << ": Error: No TH1F object called 'n_particles' found in '" << matrixfile << "'. Aborting ..." << endl;
+		abort();
+	}
 	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
 		n_simulated_particles.SetBinContent(i, n_particles->GetBinContent(i));
 	}

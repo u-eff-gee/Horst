@@ -70,8 +70,8 @@ Detector response matrices for different collimator diameters and offsets of the
 
 In order to use `Horst`, two things are needed:
 
- * `spectrum.txt`: An experimental spectrum from which the original spectrum should be reconstructed (single-column file, no text header OR a ROOT file containing a TH1F histogram, using the `-t SPECTRUM` option)
- * `matrix.root`: A simulated detector response matrix (ROOT file with an `NBINSxNBINS` TH2F histogram)
+ * `spectrum.txt`: An experimental spectrum from which the original spectrum should be reconstructed (single-column file, no text header OR a ROOT file containing a TH1F histogram with the name 'SPECTRUM', using the `-t SPECTRUM` option)
+ * `matrix.root`: A simulated detector response matrix (ROOT file with an `NBINSxNBINS` TH2F histogram called 'rema' and a TH1F histogram called 'n_particles' containing the response matrix, and the number of simulated primary particles, respectively)
 
 Both the matrix and the spectrum *from the text file* need to have the same binning (example: 1 keV per 1 bin). The spectrum should have at least as many bins as the number of rows/columns in the response matrix. All higher bins will simply be ignored.
 
