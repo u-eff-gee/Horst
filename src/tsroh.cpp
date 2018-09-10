@@ -57,7 +57,8 @@ static struct argp_option options[] = {
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
 	{"statistics", 's', 0, 0, "Add statistical fluctuations to response (switched off by default)", 0},
-	{"tfile", 't', "SPECTRUM", 0, "Read SPECTRUM from a ROOT file called INPUTFILENAME, instead from a text file.", 0},
+	{"tfile", 't', "SPECTRUM", 0, "Select SPECTRUM from a ROOT file called INPUTFILENAME, instead of a text file."
+	" Spectrum must be an object of TH1F.", 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
 
