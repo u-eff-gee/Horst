@@ -82,7 +82,15 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 
 		// Fill row of matrix with best simulation
 		TFile *inputFile = new TFile(filenames[(long unsigned int) best_simulation]);
-		TH1F *hist = (TH1F*) gDirectory->Get(histname);
+		TH1F *hist = nullptr;
+
+		if(gDirectory->FindKey(histname)){
+			hist = (TH1F*) gDirectory->Get(histname);
+		} else{
+			cout << __FILE__ << ":" << __FUNCTION__ << "():" << __LINE__ << ": Error: No TH1F object called '" << histname << "' found in '" << filenames[(long unsigned int) best_simulation] << "'. Aborting ..." << endl; 
+			abort();
+		}
+
 		simulation_shift = (Int_t) min_dist;	
 		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
 			if(j + simulation_shift < (Int_t) NBINS && (j + simulation_shift) >= 0){

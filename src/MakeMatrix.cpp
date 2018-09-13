@@ -32,16 +32,16 @@ using std::stringstream;
 
 struct Arguments{
 	TString inputfile = "";
-	TString histname = "";
-	TString outputfile = "";
+	TString histname = "hpge0";
+	TString outputfile = "output.root";
 };
 
 static char doc[] = "makematrix, Create a response matrix from a series of simulations of the detector response";
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
-	{"histname", 'n', "HISTNAME", 0, "Name of histogram for detector response", 0},
-	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
+	{"histname", 'n', "HISTNAME", 0, "Name of histogram for detector response (default: 'hpge0')", 0},
+	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file (default: 'output.root')", 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
 
@@ -68,9 +68,6 @@ int main(int argc, char* argv[]){
 
 	Arguments arguments;
 	argp_parse(&argp, argc, argv, 0, 0, &arguments);
-
-	if(arguments.outputfile == "")
-		arguments.outputfile = "output.root";
 
 	vector<TString> filenames;
 	vector<Double_t> energies;

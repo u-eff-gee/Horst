@@ -60,7 +60,7 @@ $ cd Horst/doc/
 $ make
 ```
 
-Also this Makefile contains the `make clean` option.
+This Makefile contains a `make clean` option as well.
 
 ## 4 Usage <a name="usage"></a>
 
@@ -73,9 +73,10 @@ In order to use `Horst`, two things are needed:
  * `spectrum.txt`: An experimental spectrum from which the original spectrum should be reconstructed (single-column file, no text header OR a ROOT file containing a TH1F histogram with the name 'SPECTRUM', using the `-t SPECTRUM` option)
  * `matrix.root`: A simulated detector response matrix (ROOT file with an `NBINSxNBINS` TH2F histogram called 'rema' and a TH1F histogram called 'n_particles' containing the response matrix, and the number of simulated primary particles, respectively)
 
-Both the matrix and the spectrum *from the text file* need to have the same binning (example: 1 keV per 1 bin). The spectrum should have at least as many bins as the number of rows/columns in the response matrix. All higher bins will simply be ignored.
+There is a slight difference in the interpretation of the binning factor, depending on whether the spectrum is read from a text file or a ROOT file:
 
-The spectrum *from the ROOT file* may have an arbitrary equidistant binning and will be used with this binning by `Horst`. The correct binning factor of the TH1F must then be given to `Horst` using the `-b` command-line option, so that it can rebin the response matrix accordingly.
+  * If `Horst` is reading **from a text file**, both the matrix and the spectrum need to have the same binning (example: 1 keV per 1 bin). During runtime, they will be rebinned simultaneously with the factor given by the `-b` command line option. The spectrum should have at least as many bins as the number of rows/columns in the response matrix. All higher bins will simply be ignored.
+  * If `Horst` is reading **from a ROOT file**, the TH1F histogram in the 'SPECTRUM' file may have an arbitrary equidistant binning and will be used with this binning by `Horst`. The correct binning factor of the TH1F must then be given to `Horst` using the `-b` command-line option, so that it can rebin the response matrix accordingly. (If a rebinning of the spectrum file is desired as well, this has to be done manually by the user by calling the TH1F::Rebin() method of the histogram.)
 
 For the reconstruction procedure, rebinning is an important measure to reduce the computing time which depends approximately exponentially on the number of bins.
 The rebinning factor `BINNING` (`BINNING`==1 means no rebinning, `BINNING` = 2 means two bins are merged into one ...) can be set via the `-b BINNING` command-line option. By default, `BINNING` == 10 is used in `Horst`.

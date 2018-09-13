@@ -56,7 +56,7 @@ static char doc[] = "Horst, Histogram original reconstruction spectrum tool";
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
-	{"binning", 'b', "BINNING", 0, "Rebinning factor for input histograms (default: 10)", 0},
+	{"binning", 'b', "BINNING", 0, "a) Without '-t' option: Rebinning factor for input spectrum and response matrix (default: 10)\nb) With '-t' option   : Rebinning factor for response matrix (default: 10)", 0},
 	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix", 0},
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"left", 'l', "LEFT", 0, "Left limit of fit range", 0},
