@@ -264,10 +264,10 @@ int main(int argc, char* argv[]){
 
 	/************ Write results to file *************/
 
-	cout << "> Writing output file " << OUTPUT_DIR << arguments.outputfile << " ..." << endl;
+	cout << "> Writing output file " << arguments.outputfile << " ..." << endl;
 
 	stringstream outputfilename;
-	outputfilename << OUTPUT_DIR << arguments.outputfile;
+	outputfilename << arguments.outputfile;
 
 	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
 	spectrum.Write();
