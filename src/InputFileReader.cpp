@@ -29,6 +29,7 @@
 using std::cout;
 using std::endl;
 using std::ifstream;
+using std::ofstream;
 using std::string;
 using std::stringstream;
 
@@ -173,4 +174,20 @@ void InputFileReader::readROOTSpectrum(TH1F &spectrum, const TString spectrumfil
 	for(Int_t i = 0; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
 		spectrum.SetBinContent(i, spec->GetBinContent(i));
 	}
+}
+
+void InputFileReader::writeCorrelationMatrix(TMatrixDSym &correlation_matrix, TString outputfilename) const {
+	ofstream outputfile;
+	outputfile.open(outputfilename);
+
+	Int_t n_rows = correlation_matrix.GetNrows();
+
+	for(Int_t i = 0; i < n_rows; ++i){
+		for(Int_t j = 0; j < n_rows; ++j){
+			outputfile << correlation_matrix(i,j) << "\t";
+		}
+		outputfile << "\n";
+	}
+
+	outputfile.close();
 }

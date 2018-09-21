@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <TF1.h>
+#include <TFitResult.h>
 
 #include "Config.h"
 #include "FitFunction.h"
@@ -48,7 +49,7 @@ void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t
 	}
 }
 
-void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit_uncertainty, Int_t binstart, Int_t binstop, const Bool_t verbose){
+void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit_uncertainty, Int_t binstart, Int_t binstop, const Bool_t verbose, const Bool_t correlation, TMatrixDSym &correlation_matrix){
 
 	FitFunction fitFunction(rema, BINNING, binstart, binstop);
 	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, NBINS/BINNING);
@@ -62,13 +63,23 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 			fitf.SetParameter(i, start_params.GetBinContent(i));
 			fitf.SetParLimits(i, 0., fit_upper_limit);
 		}
-
 	}
 
+	TFitResultPtr fit_result;
 	if(verbose){
-		spectrum.Fit("fitf", "0N", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+		if(correlation){
+			fit_result = spectrum.Fit("fitf", "S0N", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+			correlation_matrix = fit_result->GetCorrelationMatrix();
+		} else{
+			spectrum.Fit("fitf", "0N", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+		}
 	} else{
-		spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+		if(correlation){
+			fit_result = spectrum.Fit("fitf", "S0QN", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+			correlation_matrix = fit_result->GetCorrelationMatrix();
+		} else{
+			spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+		}
 	}
 
 	chi2 = fitf.GetChisquare();

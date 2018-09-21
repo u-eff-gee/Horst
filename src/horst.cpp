@@ -15,12 +15,13 @@
     along with Horst.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <TROOT.h>
 #include <TApplication.h>
-#include <TF1.h>
-#include <TStyle.h>
-#include <TFile.h>
 #include <TCanvas.h>
+#include <TF1.h>
+#include <TFile.h>
+#include <TMatrixDSym.h>
+#include <TROOT.h>
+#include <TStyle.h>
 
 #include <argp.h>
 #include <iostream>
@@ -54,6 +55,7 @@ struct Arguments{
 	Bool_t interactive_mode = false;
 	Bool_t tfile = false;
 	Bool_t verbose = false;
+	Bool_t correlation = false;
 };
 
 static char doc[] = "Horst, Histogram original reconstruction spectrum tool";
@@ -70,6 +72,7 @@ static struct argp_option options[] = {
 	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
 	{"tfile", 't', "SPECTRUM", 0, "Select SPECTRUM from a ROOT file called INPUTFILENAME, instead of a text file."
 	" Spectrum must be an object of TH1F.", 0},
+	{"correlation", 'c', 0, 0, "Write the correlation matrix of the fit to the output file. If the '-u' option is used, only one correlation matrix will be written, although NRANDOM fits are executed.", 0},
 	{"verbose", 'v', 0, 0, "Enable ROOT to print verbose information about the fitting process", 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
@@ -88,6 +91,7 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'r': arguments->right= (UInt_t) atoi(arg); break;
 		case 'i': arguments->interactive_mode= true; break;
 		case 't': arguments->tfile = true; arguments->spectrumname = arg; break;
+		case 'c': arguments->correlation = true; break;
 		case 'v': arguments->verbose = true; break;
 		case ARGP_KEY_END:
 			if(state->arg_num == 0){
@@ -118,6 +122,7 @@ int main(int argc, char* argv[]){
 	/************ Initialize auxiliary classes *************/
 
 	InputFileReader inputFileReader(arguments.binning);
+	TMatrixDSym correlation_matrix((Int_t) NBINS / (Int_t) arguments.binning);
 	Fitter fitter(arguments.binning);
 	Reconstructor reconstructor(arguments.binning);
 	MonteCarloUncertainty monteCarloUncertainty(arguments.binning);
@@ -214,7 +219,7 @@ int main(int argc, char* argv[]){
 
 	cout << "> Fit spectrum using TopDown parameters as start parameters ..." << endl;
 
-	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning, arguments.verbose);
+	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning, arguments.verbose, arguments.correlation, correlation_matrix);
 
 	fitter.print_fitresult();
 
@@ -286,10 +291,8 @@ int main(int argc, char* argv[]){
 
 		uncertainty.getLowerAndUpperLimit(spectrum_reconstructed, reconstruction_uncertainty, reconstruction_uncertainty_low, reconstruction_uncertainty_up, true);
 
-
 	/************ Plot results *************/
 
-	cout << "Creating Canvas ..." << endl;
 	TCanvas c1("c1", "Plots", 4);
 	if(arguments.interactive_mode){
 		cout << "> Creating plots ..." << endl;
@@ -377,6 +380,12 @@ int main(int argc, char* argv[]){
 	reconstruction_uncertainty_up.Write();
 
 	outputfile.Close();
+
+	outputfilename.str("");
+	outputfilename << "correlation_" << arguments.outputfile;
+
+	if(arguments.correlation)
+		inputFileReader.writeCorrelationMatrix(correlation_matrix, outputfilename.str().c_str());
 
 	if(arguments.interactive_mode){
 		cout << "> Starting interactive plot ..." << endl;

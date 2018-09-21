@@ -18,8 +18,9 @@
 #ifndef INPUTFILEREADER_H
 #define INPUTFILEREADER_H 1
 
-#include <TROOT.h>
 #include <TH2.h>
+#include <TMatrixDSym.h>
+#include <TROOT.h>
 
 #include <vector>
 
@@ -34,6 +35,7 @@ public:
 
 	void fillMatrix(const vector<TString> &filenames, const vector<Double_t> &energies, const vector<Double_t> &n_particles, const TString histname, TH2F &response_matrix, TH1F &n_simulated_particles);
 
+	void writeCorrelationMatrix(TMatrixDSym &correlation_matrix, TString outputfilename) const;
 	void writeMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, TString outputfilename) const;
 	void readMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const TString matrixfile);
 
