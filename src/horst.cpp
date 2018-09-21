@@ -31,6 +31,7 @@
 #include "Config.h"
 #include "Fitter.h"
 #include "InputFileReader.h"
+#include "MonteCarloUncertainty.h"
 #include "Reconstructor.h"
 #include "Uncertainty.h"
 
@@ -44,6 +45,9 @@ struct Arguments{
 	TString spectrumfile = "";
 	TString spectrumname = "";
 	TString matrixfile = "";
+	UInt_t uncertainty_mc = 1;
+	Bool_t use_mc = false;
+	Bool_t write_mc = false;
 	TString outputfile = "output.root";
 	UInt_t left = 0;
 	UInt_t right = NBINS;
@@ -58,6 +62,8 @@ static char args_doc[] = "INPUTFILENAME";
 static struct argp_option options[] = {
 	{"binning", 'b', "BINNING", 0, "a) Without '-t' option: Rebinning factor for input spectrum and response matrix (default: 10)\nb) With '-t' option   : Rebinning factor for response matrix (default: 10)", 0},
 	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix", 0},
+	{"uncertainty_mc", 'u', "NRANDOM", 0, "Determine uncertainty using a Monte-Carlo (MC) method to include correlations. NRANDOM is the number of MC iterations (default: 10).", 0},
+	{"write_mc", 'w', 0, 0, "Write MC-generated spectra and reconstructed spectra. This option is ignored if '-u' option is not used.", 0},
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"left", 'l', "LEFT", 0, "Left limit of fit range", 0},
 	{"right", 'r', "RIGHT", 0, "Right limit of fit range", 0},
@@ -73,8 +79,10 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 
 	switch (key){
 		case ARGP_KEY_ARG: arguments->spectrumfile = arg; break;
-		case 'b': arguments->binning= atoi(arg); break;
+		case 'b': arguments->binning= (UInt_t) atoi(arg); break;
 		case 'm': arguments->matrixfile= arg; break;
+		case 'u': arguments->use_mc = true; arguments->uncertainty_mc = (UInt_t) atoi(arg); break;
+		case 'w': arguments->write_mc = true; break;
 		case 'o': arguments->outputfile = arg; break;
 		case 'l': arguments->left= (UInt_t) atoi(arg); break;
 		case 'r': arguments->right= (UInt_t) atoi(arg); break;
@@ -112,6 +120,7 @@ int main(int argc, char* argv[]){
 	InputFileReader inputFileReader(arguments.binning);
 	Fitter fitter(arguments.binning);
 	Reconstructor reconstructor(arguments.binning);
+	MonteCarloUncertainty monteCarloUncertainty(arguments.binning);
 
 	/************ Initialize histograms *************/
 
@@ -119,36 +128,42 @@ int main(int argc, char* argv[]){
 	TH1F spectrum;
 
 	if(arguments.tfile){
-		spectrum = TH1F("spectrum", "Input Spectrum", NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+		spectrum = TH1F("spectrum", "Input Spectrum",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 	} else {
-		spectrum = TH1F("spectrum", "Input Spectrum", NBINS, 0., (Double_t) NBINS - 1);
+		spectrum = TH1F("spectrum", "Input Spectrum",  (Int_t) NBINS, 0., (Double_t) NBINS - 1);
 	}
 
 	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
 
 	// TopDown algorithm
-	TH1F topdown_params("topdown_params", "TopDown Parameters", NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F topdown_FEP("topdown_FEP", "TopDown FEP", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_fit("topdown_fit", "TopDown Fit", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_simulation_uncertainty("topdown_simulation_uncertainty", "TopDown Simulation Uncertainty", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_total_uncertainty("topdown_total_uncertainty", "TopDown Total Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F topdown_params("topdown_params", "TopDown Parameters",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F topdown_FEP("topdown_FEP", "TopDown FEP",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_fit("topdown_fit", "TopDown Fit",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_simulation_uncertainty("topdown_simulation_uncertainty", "TopDown Simulation Uncertainty",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F topdown_total_uncertainty("topdown_total_uncertainty", "TopDown Total Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 
 	// Fit
-	TH1F fit_params("fit_params", "Fit Parameters", NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F fit_uncertainty("fit_uncertainty", "Fit Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F fit_FEP("fit_FEP", "Fit FEP", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F fit_result("fit_result", "Fit Result", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F fit_params("fit_params", "Fit Parameters",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F fit_uncertainty("fit_uncertainty", "Fit Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F fit_FEP("fit_FEP", "Fit FEP",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F fit_result("fit_result", "Fit Result",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
 	TH1F fit_simulation_uncertainty("fit_simulation_uncertainty", "Fit Simulation Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 	TH1F fit_spectrum_uncertainty("fit_spectrum_uncertainty", "Spectrum Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F fit_total_uncertainty("fit_total_uncertainty", "Total Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F fit_total_uncertainty("fit_total_uncertainty", "Total Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 
-	TH1F spectrum_reconstructed("spectrum_reconstructed", "Reconstructed Spectrum", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F reconstruction_uncertainty_low("reconstruction_uncertainty_low", "Reconstruction Uncertainty lower Limit", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F reconstruction_uncertainty_up("reconstruction_uncertainty_up", "Reconstruction Uncertainty upper Limit", (Int_t) NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F spectrum_reconstructed("spectrum_reconstructed", "Reconstructed Spectrum",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F reconstruction_uncertainty_low("reconstruction_uncertainty_low", "Reconstruction Uncertainty lower Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F reconstruction_uncertainty_up("reconstruction_uncertainty_up", "Reconstruction Uncertainty upper Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+
+	// Monte-Carlo Uncertainty
+	vector<TH1F> mc_spectra;
+	vector<TH1F> mc_reconstructed_spectra;
+	TH1F mc_reconstruction_mean;
+	TH1F mc_spectrum_uncertainty;
 
 	/************ Start ROOT application *************/
 
@@ -165,13 +180,13 @@ int main(int argc, char* argv[]){
 		inputFileReader.readROOTSpectrum(spectrum, arguments.spectrumfile, arguments.spectrumname);
 	else{
 		inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
-		spectrum.Rebin(arguments.binning);
+		spectrum.Rebin( (Int_t) arguments.binning);
 	}
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
-	response_matrix.Rebin2D(arguments.binning, arguments.binning);
-	n_simulated_particles.Rebin(arguments.binning);
+	response_matrix.Rebin2D((Int_t) arguments.binning, (Int_t) arguments.binning);
+	n_simulated_particles.Rebin((Int_t) arguments.binning);
 
 	/************ Use Top-Down unfolding to get start parameters *************/
 
@@ -193,7 +208,6 @@ int main(int argc, char* argv[]){
 
 	fitter.remove_negative(topdown_params);
 
-
 	/************ Fit *************/
 
 	cout << "> Fit spectrum using TopDown parameters as start parameters ..." << endl;
@@ -207,7 +221,44 @@ int main(int argc, char* argv[]){
 
 	reconstructor.reconstruct(fit_params, n_simulated_particles, spectrum_reconstructed);
 
-	uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+	if(arguments.use_mc){
+		cout << "> Using Monte-Carlo algorithm to determine fit uncertainty (NRANDOM == " << arguments.uncertainty_mc << ")" << endl;
+
+		stringstream histname("");
+
+		for(UInt_t i = 0; i < arguments.uncertainty_mc; ++i){
+			histname << "mc_spectrum_" << i;
+			mc_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), (Int_t) NBINS/ (Int_t) arguments.binning,  0., (Double_t) NBINS - 1));
+			monteCarloUncertainty.apply_fluctuations(mc_spectra[i], spectrum, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+			histname.str("");
+
+
+			fitter.fit(mc_spectra[i], response_matrix, topdown_params, fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+
+
+			histname << "mc_reconstructed_spectrum_" << i;
+			mc_reconstructed_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), (Int_t) NBINS/ (Int_t) arguments.binning,  0., (Double_t) NBINS - 1));
+			reconstructor.reconstruct(fit_params, n_simulated_particles, mc_reconstructed_spectra[i]);
+			histname.str("");
+
+			if(i % MC_UPDATE_INTERVAL == 0 && i > 0)
+				cout << "\t> " << i << " Monte-Carlo iterations processed" << endl;
+		}
+		cout << "\t> " << arguments.uncertainty_mc << " Monte-Carlo iterations processed" << endl;
+	}
+
+	if(arguments.use_mc){
+
+		cout << "> Evaluating Monte-Carlo results ..." << endl;
+
+		mc_reconstruction_mean = TH1F("mc_reconstruction_mean", "MC Reconstructed Spectrum", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_spectrum_uncertainty = TH1F("mc_reconstruction_uncertainty", "MC Reconstruction Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+
+		uncertainty.getUncertainty(fit_params, response_matrix, fit_simulation_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+		monteCarloUncertainty.getSpectrumUncertainty(mc_reconstruction_mean, fit_spectrum_uncertainty, mc_reconstructed_spectra, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+	} else{
+		uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+	}
 
 	vector<TH1F*> uncertainties(3);
 	uncertainties[0] = &fit_uncertainty;
@@ -220,6 +271,7 @@ int main(int argc, char* argv[]){
 
 	/************ Plot results *************/
 
+	cout << "Creating Canvas ..." << endl;
 	TCanvas c1("c1", "Plots", 4);
 	if(arguments.interactive_mode){
 		cout << "> Creating plots ..." << endl;
@@ -271,6 +323,12 @@ int main(int argc, char* argv[]){
 
 	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
 	spectrum.Write();
+	if(arguments.use_mc && arguments.write_mc){
+		for(auto s : mc_spectra)
+			s.Write();
+		for(auto s : mc_reconstructed_spectra)
+			s.Write();
+	}
 
 	topdown_params.Write();
 	topdown_FEP.Write();

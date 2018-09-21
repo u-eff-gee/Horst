@@ -163,20 +163,19 @@ int main(int argc, char* argv[]){
 
 	/************ Plot results *************/
 
-	//TCanvas c1("c1", "Plots", 4);
-	TCanvas *c1 = new TCanvas("c1", "Plots", 4);
+	TCanvas c1("c1", "Plots", 4);
 	if(arguments.interactive_mode){
 		cout << "> Creating plots ..." << endl;
 
-		c1->Divide(1, 2);
+		c1.Divide(1, 2, (Float_t) 0.01, (Float_t) 0.01);
 
-		c1->cd(1);
+		c1.cd(1);
 		response_spectrum_FEP.SetLineColor(kBlack);
 		response_spectrum_FEP.Draw();
 		spectrum.SetLineColor(kGreen);
 		spectrum.Draw("same");
 
-		c1->cd(2);
+		c1.cd(2);
 		response_spectrum.SetLineColor(kBlack);
 		response_spectrum.Draw();
 	}

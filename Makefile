@@ -10,7 +10,7 @@ CPP = g++
 CPPFLAGS = -O3 -Wall -Wextra -Wshadow -std=c++11 -I$(INCDIR)
 ROOTFLAGS=`root-config --cflags --glibs`
 
-_DEPS = Config.h FitFunction.h Fitter.h InputFileReader.h MakeMatrix.h Reconstructor.h Uncertainty.h
+_DEPS = Config.h FitFunction.h Fitter.h InputFileReader.h MakeMatrix.h MonteCarloUncertainty.h Reconstructor.h Uncertainty.h
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS)) 
 
 _OBJ_CONVERTER = HistogramToTxt.o 
@@ -22,7 +22,7 @@ OBJ_MATRIX = $(patsubst %,$(OBJDIR)/%,$(_OBJ_MATRIX))
 _OBJ_TSROH = FitFunction.o Fitter.o InputFileReader.o Reconstructor.o tsroh.o
 OBJ_TSROH = $(patsubst %,$(OBJDIR)/%,$(_OBJ_TSROH))
 
-_OBJ = FitFunction.o Fitter.o horst.o InputFileReader.o Reconstructor.o Uncertainty.o
+_OBJ = FitFunction.o Fitter.o horst.o InputFileReader.o MonteCarloUncertainty.o Reconstructor.o Uncertainty.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)

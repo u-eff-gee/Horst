@@ -20,3 +20,4 @@
 using std::string;
 
 const unsigned int NBINS = 12000;
+const unsigned int MC_UPDATE_INTERVAL = 10;

@@ -79,6 +79,30 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 	}
 }
 
+void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, Int_t binstart, Int_t binstop){
+
+	FitFunction fitFunction(rema, BINNING, binstart, binstop);
+	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, NBINS/BINNING);
+
+	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
+
+	for(Int_t i = 0; i <= start_params.GetNbinsX(); ++i){
+		if(i < binstart || i > binstop){
+			fitf.FixParameter(i, 0.);
+		} else{
+			fitf.SetParameter(i, start_params.GetBinContent(i));
+			fitf.SetParLimits(i, 0., fit_upper_limit);
+		}
+
+	}
+
+	spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+
+	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
+		params.SetBinContent(i, fitf.GetParameter(i-1));
+	}
+}
+
 void Fitter::fittedFEP(const TH1F &params, const TH2F &rema, TH1F &fitted_FEP){
 	for(Int_t i = 1; i <= (Int_t) NBINS/ (Int_t) BINNING; ++i){
 		fitted_FEP.SetBinContent(i, params.GetBinContent(i)*rema.GetBinContent(i, i));
