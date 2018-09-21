@@ -38,7 +38,7 @@ void MonteCarloUncertainty::getSpectrumUncertainty(TH1F &mc_reconstruction_mean,
 		} else{
 			values = vector<Double_t>(nrandom, 0.);
 			for(UInt_t j = 0; j < nrandom; ++j){
-				values[i] = mc_reconstructed_spectra[j].GetBinContent((Int_t) i);
+				values[j] = mc_reconstructed_spectra[j].GetBinContent((Int_t) i);
 			}
 
 			Double_t mean = get_mean(values);
@@ -52,13 +52,19 @@ void MonteCarloUncertainty::apply_fluctuations(TH1F &modified_spectrum, const TH
 	Double_t mu = 0.;
 	Double_t sigma = 0.;
 
-	for(Int_t i = binstart; i <= binstop; ++i){
+	for(Int_t i = 1; i <= (Int_t) NBINS / (Int_t) BINNING; ++i){
+
 		mu = spectrum.GetBinContent(i);
+		
+		if(i < binstart || i > binstop){
+			modified_spectrum.SetBinContent(i, mu);
+		}
 		if(mu == 0.){
 			modified_spectrum.SetBinContent(i, 0.);
+		} else{
+			sigma = sqrt(mu);
+			modified_spectrum.SetBinContent(i, get_positive_random_normal(mu, sigma));
 		}
-		sigma = sqrt(mu);
-		modified_spectrum.SetBinContent(i, get_positive_random_normal(mu, sigma));
 	}
 }
 
@@ -79,5 +85,5 @@ Double_t MonteCarloUncertainty::get_stdev(vector<Double_t> &values, Double_t mea
 	for(auto v: values)
 		sum += (v - mean)*(v - mean);
 
-	return sum / (Double_t) values.size();
+	return sqrt(sum / (Double_t) values.size());
 }
