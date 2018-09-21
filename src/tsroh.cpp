@@ -67,7 +67,7 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 
 	switch (key){
 		case ARGP_KEY_ARG: arguments->spectrumfile = arg; break;
-		case 'b': arguments->binning= atoi(arg); break;
+		case 'b': arguments->binning = (UInt_t) atoi(arg); break;
 		case 'm': arguments->matrixfile= arg; break;
 		case 'o': arguments->outputfile = arg; break;
 		case 'i': arguments->interactive_mode= true; break;
@@ -111,9 +111,9 @@ int main(int argc, char* argv[]){
 	TH1F spectrum;
 
 	if(arguments.tfile){
-		spectrum = TH1F("spectrum", "Input Spectrum", NBINS/arguments.binning, 0., (Double_t) NBINS - 1);
+		spectrum = TH1F("spectrum", "Input Spectrum", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 	} else {
-		spectrum = TH1F("spectrum", "Input Spectrum", NBINS, 0., (Double_t) NBINS - 1);
+		spectrum = TH1F("spectrum", "Input Spectrum", (Int_t) NBINS, 0., (Double_t) NBINS - 1);
 	}
 
 	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
@@ -122,8 +122,8 @@ int main(int argc, char* argv[]){
 
 	// Output
 	
-	TH1F response_spectrum("response_spectrum", "Spectrum with Response", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F response_spectrum_FEP("response_spectrum_FEP", "Spectrum with Response, normalized to FEP", NBINS/arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F response_spectrum("response_spectrum", "Spectrum with Response", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
+	TH1F response_spectrum_FEP("response_spectrum_FEP", "Spectrum with Response, normalized to FEP", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
 
 	/************ Start ROOT application *************/
 
@@ -140,13 +140,13 @@ int main(int argc, char* argv[]){
 		inputFileReader.readROOTSpectrum(spectrum, arguments.spectrumfile, arguments.spectrumname);
 	else{
 		inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
-		spectrum.Rebin(arguments.binning);
+		spectrum.Rebin((Int_t) arguments.binning);
 	}
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
-	response_matrix.Rebin2D(arguments.binning, arguments.binning);
-	n_simulated_particles.Rebin(arguments.binning);
+	response_matrix.Rebin2D((Int_t) arguments.binning, (Int_t) arguments.binning);
+	n_simulated_particles.Rebin((Int_t) arguments.binning);
 
 	for(Int_t i = 0; i <= (Int_t) NBINS/(Int_t) arguments.binning; ++i)
 		inverse_n_simulated_particles.SetBinContent(i, 1./n_simulated_particles.GetBinContent(i));
@@ -163,19 +163,20 @@ int main(int argc, char* argv[]){
 
 	/************ Plot results *************/
 
-	TCanvas c1("c1", "Plots", 4);
+	//TCanvas c1("c1", "Plots", 4);
+	TCanvas *c1 = new TCanvas("c1", "Plots", 4);
 	if(arguments.interactive_mode){
 		cout << "> Creating plots ..." << endl;
 
-		c1.Divide(1, 2);
+		c1->Divide(1, 2);
 
-		c1.cd(1);
+		c1->cd(1);
 		response_spectrum_FEP.SetLineColor(kBlack);
 		response_spectrum_FEP.Draw();
 		spectrum.SetLineColor(kGreen);
 		spectrum.Draw("same");
 
-		c1.cd(2);
+		c1->cd(2);
 		response_spectrum.SetLineColor(kBlack);
 		response_spectrum.Draw();
 	}
