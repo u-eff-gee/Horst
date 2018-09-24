@@ -6,6 +6,11 @@
  1. [Introduction](#introduction)
  2. [Prerequisites](#prerequisites)
  3. [Installation](#installation)
+
+    3.1 [Documentation](#documentation)
+
+    3.2 [Tests](#tests)
+
  4. [Usage](#usage)
 
     4.1 [Horst](#usage_horst)
@@ -40,7 +45,7 @@ $ git clone https://github.com/uga-uga/Horst.git
 After that enter the newly created `Horst/` directory and execute `make`:
 
 ```
-$ cd Horst/
+$ cd horst/
 $ make
 ```
 
@@ -53,14 +58,34 @@ This should create four executables:
 
 The Makefile also supports the commands `make clean` and `make debug`. The latter activates the `-g` compiler option, switches off optimization and prints more warnings (most of the warnings you will see are actually caused by ROOT, not by `Horst`).
 
-The documentation can be built by going to the `doc/` directory and executing `make`: 
+### 3.1 Documentation <a name="documentation"></a>
+
+`Horst` includes a documentation file, which describes the basics of how the reconstruction procedure is implemented and what assumptions go into it. If an option of `Horst` is only mentioned very briefly in this README or in the command line help, a much more detailed explanation may be found in the documentation. It can be built by going to the `doc/` directory and executing `make`: 
 
 ```
-$ cd Horst/doc/
+$ cd horst/doc/
 $ make
 ```
 
 This Makefile contains a `make clean` option as well.
+
+### 3.2 Tests <a name="tests"></a>
+
+`Horst` also comes along with a `ROOT` script that provides the framework to create artificial spectra and response matrices, which can be used for testing.
+
+The script can be built by by going to the `test/` directory and executing `make`: 
+
+```
+$ cd horst/test/
+$ make
+```
+
+This Makefile contains a `make clean` option as well. The `make` command creates an executable called `create_test_data`.
+The number of bins `NBINS` (see also sec. [Usage](#usage)) of the test spectrum and response matrix is hard-coded in the file `horst/test/include/ConfigTest.h`. Note that in order to process the output of `create_test_data` by `Horst` or `Tsroh`, this setting must be the same in both codes.
+
+User-defined response function and spectrum can be hard-coded as member functions of the corresponding classes `SpectrumCreator` and `ResponseMatrixCreator`. 
+
+After changing anything in the source code of `create_test_data`, the code needs to be recompiled.
 
 ## 4 Usage <a name="usage"></a>
 
@@ -95,7 +120,7 @@ Most probably, however, the user will at least want to restrict the energy range
 $ ./horst spectrum.txt -m matrix.root -l E_LOW -r E_UP
 ```
 
-There are further options available to change the binning factor, create interactive plots, set the name of the output file and make the program more verbose. All options can be listed by executing
+There are further options available to change the binning factor, get a better uncertainty estimate using a Monte-Carlo method, create interactive plots, set the name of the output file, write the correlation matrix of the fit estimated by the `ROOT` algorithm to a text file, and make the program more verbose. All options can be listed by executing
 
 ```
 $ ./horst --help
@@ -113,6 +138,12 @@ $ ./horst --help
  * `*_statistical_uncertainty`: The uncertainty which comes from the statistics in the input spectrum.
  * `*_reconstruction_uncertainty`: The uncertainty of the reconstruction, which is a combination of all three uncertainties above. Also, `_reconstruction_uncertainty_low` and `_reconstruction_uncertainty_up` exist, which are the reconstructed spectrum with the uncertainty subtracted/added.
  * `*_total_uncertainty`: The total uncertainty of the fit (Note that the fit and the reconstructed spectrum are different things)
+
+If the Monte-Carlo uncertainty estimation option `-u NRANDOM`, using `NRANDOM` iterations, is activated, `NRANDOM` spectra are generated from which the same number of reconstructed spectra is calculated. All those can be saved to a file as well (maybe if a user wants to do a more sophisticated analysis of their distributions than just taking the mean value and the standard deviation) using the `-w` option.
+They can follow the name convention:
+
+ * `*_mc_spectrum_NRANDOM`: Input spectrum from Monte-Carlo iteration #`NRANDOM`
+ * `*_mc_reconstructed_spectrum_NRANDOM`: Reconstructed spectrum from Monte-Carlo iteration #`NRANDOM`
 
 ### 4.2 Tsroh <a name="usage_tsroh"></a>
 
