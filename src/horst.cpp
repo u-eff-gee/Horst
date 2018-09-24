@@ -49,6 +49,7 @@ struct Arguments{
 	UInt_t uncertainty_mc = 1;
 	Bool_t use_mc = false;
 	Bool_t write_mc = false;
+	TString correlation_matrix_filename = "correlation_matrix.txt";
 	TString outputfile = "output.root";
 	UInt_t left = 0;
 	UInt_t right = NBINS;
@@ -72,7 +73,7 @@ static struct argp_option options[] = {
 	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
 	{"tfile", 't', "SPECTRUM", 0, "Select SPECTRUM from a ROOT file called INPUTFILENAME, instead of a text file."
 	" Spectrum must be an object of TH1F.", 0},
-	{"correlation", 'c', 0, 0, "Write the correlation matrix of the fit to the output file. If the '-u' option is used, only one correlation matrix will be written, although NRANDOM fits are executed.", 0},
+	{"correlation", 'c', "CORRELATIONFILENAME", 0, "Write the correlation matrix of the fit to the specified output file. If the '-u' option is used, only one correlation matrix will be written, although NRANDOM fits are executed.", 0},
 	{"verbose", 'v', 0, 0, "Enable ROOT to print verbose information about the fitting process", 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
@@ -91,7 +92,7 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'r': arguments->right= (UInt_t) atoi(arg); break;
 		case 'i': arguments->interactive_mode= true; break;
 		case 't': arguments->tfile = true; arguments->spectrumname = arg; break;
-		case 'c': arguments->correlation = true; break;
+		case 'c': arguments->correlation = true; arguments->correlation_matrix_filename = arg; break;
 		case 'v': arguments->verbose = true; break;
 		case ARGP_KEY_END:
 			if(state->arg_num == 0){
@@ -382,10 +383,12 @@ int main(int argc, char* argv[]){
 	outputfile.Close();
 
 	outputfilename.str("");
-	outputfilename << "correlation_" << arguments.outputfile;
+	outputfilename << arguments.correlation_matrix_filename;
 
-	if(arguments.correlation)
+	if(arguments.correlation){
+		cout << "> Writing correlation matrix to output file " << outputfilename.str() << " ..." << endl;
 		inputFileReader.writeCorrelationMatrix(correlation_matrix, outputfilename.str().c_str());
+	}
 
 	if(arguments.interactive_mode){
 		cout << "> Starting interactive plot ..." << endl;
