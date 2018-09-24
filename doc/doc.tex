@@ -20,7 +20,7 @@ This document describes briefly how the reconstruction of original spectra can b
 First, treat the particle spectrum $s(E)$ as a continous function of the energy $E$. 
 The detected spectrum will be denoted as $\tilde{s}(E)$.
 
-The content of the detected spectrum at an energy $E$ is related to the original spectrum at an energy by a convolution with the detector response function $r(E, E')$:
+The content of the detected spectrum at an energy $E$ is related to the original spectrum by a convolution with the detector response function $r(E, E')$:
 
 \begin{equation}
 \label{convolution_continuous}
@@ -40,7 +40,7 @@ i.e. a detector will, at maximum, detect the full energy of a particle, and not 
 
 \section{Histograms}
 In reality, one almost never measures continous spectra, but they will be binned in some way.
-Denoting all quantities with square brackets instead of braces and variables with an index in order to indicates discrete values, Eq. \ref{convolution_continuous} becomes:
+Denoting all quantities with square brackets instead of braces, and variables with an index in order to indicates discrete values, Eq. (\ref{convolution_continuous}) becomes:
 
 \begin{equation}
 	\label{convolution_discrete}
@@ -82,9 +82,12 @@ The convolution of the response function on the spectrum has now become the acti
 	\right]
 \end{equation}
 
+Each column $r[][i]$ of the the matrix is multiplied by a single entry of the original spectrum. This means that it represents the response of the detector to monoenergetic particles with the energy $E_i$.
+Each row $r[i][]$ shows the magnitude of the correlation of this bin with all others.
+
 \section{Solving for the original spectrum}
 
-The idealized problem in Eq. \ref{matrix_equation_general} can in principle be solved by inversion of the matrix $r$:
+The idealized problem in Eq. (\ref{matrix_equation_general}) can in principle be solved by inversion of the matrix $r$:
 
 \begin{equation}
 	\label{matrix_equation_solved}
@@ -100,10 +103,10 @@ Note that, in a real detection experiment, there is the influence of counting st
 
 Admitting statistical fluctiations, the equality of the two parts of the equation does not hold any more.
 However, equality will be assumed in the following, i.e. it is assumed that statistics are high enough so that the fluctuations do not matter too much.
-This would mean that Eq. \ref{matrix_equation_general} can still be solved by inversion.
+This would mean that Eq. (\ref{matrix_equation_general}) can still be solved by inversion.
 
-However, the brute-force solution by inversion can be greatly simplified by applying Eq. \ref{response_condition} in discretized form. 
-Then, the matrix in Eq. \ref{matrix_equation_general} becomes an upper triangular matrix:
+However, the brute-force solution by inversion can be greatly simplified by applying Eq. (\ref{response_condition}) in discretized form. 
+Then, the matrix in Eq. (\ref{matrix_equation_general}) becomes an upper triangular matrix:
 
 \begin{equation}
 	\label{matrix_equation_triangle_explicit}
@@ -140,14 +143,14 @@ It can be visualized as subsequently subtracting the correctly scaled response f
 Its starting steps are:
 
 \begin{enumerate}
-	\item{Starting at the lower right edge (highest energy), solve the trivial equation $\tilde{s}[N] = r[N][N] \cdot s[N]$ to scale the full-energy peak of the response function to the detected spectrum. 
-		The scaling factor $r[N[N]/\tilde{s}[N]$ is the content of bin $N$ in the original spectrum.}
+	\item{Starting at the lower right edge of the matrix (highest energy), solve the trivial equation $\tilde{s}[N] = r[N][N] \cdot s[N]$ to scale the full-energy peak of the response function to the detected spectrum. 
+		The scaling factor $r[N][N]/\tilde{s}[N]$ is the content of bin $N$ in the original spectrum.}
 	\item{Multiply the corresponding column $N$ of the response matrix with the factor and subtract it on both sides of the equation. The highest energy bin of $s$ is now a zero, i.e. the outermost column $r[][N]$ does not matter any more, as well as the lowest row $r[N][]$.}
 	\item{Proceed with the equation in row $N-1$ as in the first step, because this one has now become trivial.}
 	\item{...}
 \end{enumerate}
 
-This algorithm, like all direct solutions of Eq. \ref{matrix_equation_general} have the drawback that they can yield unphysical results, i.e. negative bin contents, because the simulated response is not perfect, the statistical effects cumulate, or the energy calibration of the detected spectrum is not perfect.
+This algorithm, like all direct solutions of Eq. (\ref{matrix_equation_general}) have the drawback that they can yield unphysical results, i.e. negative bin contents, because the simulated response is not perfect, the statistical effects cumulate, or the energy calibration of the detected spectrum is not perfect.
 This can be overcome by imposing the condition
 
 \begin{equation}
@@ -159,16 +162,99 @@ which turns the matrix inversion into a minimization problem that can be solved,
 With a perfect response simulation and no statistical fluctiations, the TopDown algorithm and the fit should yield the same results.
 Assuming that the influence of both effects is not too strong, \textbf{Horst} uses both algorithms: 
 
-First, it solves the problem using the TopDown algorithm. After that, it uses the obtained parameters $s[i]$ as start parameters for a least-squares fit, setting all negative parameters to zero and imposing Eq. \ref{no_zeros}.
+First, it solves the problem using the TopDown algorithm. After that, it uses the obtained parameters $s[i]$ as start parameters for a least-squares fit, setting all negative parameters to zero and imposing Eq. (\ref{no_zeros}).
 
 \section{Response function}
-In fact, the response matrix comes from a sequence of simulations with a monoenergetic particle beam using $N_\mathrm{sim}$ primary particles (for simplicity, assume that the same number of primary particles has been used in all simulations).
+In fact, the response matrix comes from a sequence of simulations with a monoenergetic particle beam using $N_\mathrm{sim}$ primary particles. For simplicity, assume that the same number of primary particles has been used in all simulations, then the simulated response matrix $r_\mathrm{sim}$ is related to $r$ by:
+%
+\begin{equation}
+	r_\mathrm{sim} = N_\mathrm{sim} \cdot r
+\end{equation}
+%
+Using the simulated response function, Eq. (\ref{matrix_equation_triangle_explicit}) becomes:
+%
+\begin{equation}
+	\label{matrix_equation_triangle_simulated}
+	\left[ 
+		\begin{array}{c}
+			\tilde{s}[0] \\
+			\tilde{s}[1] \\
+			\vdots	\\
+			\tilde{s}[N] \\
+		\end{array}
+	\right]
+	= 
+	\begin{bmatrix}
+		r_{sim}[0][0] & r_{sim}[0][1] & \hdots & r_{sim}[0][N] \\
+		0       & r_{sim}[1][1] & \vdots & r_{sim}[1][N] \\
+		\vdots  & \ddots  & \ddots & \vdots  \\
+		0       & 0       & \ddots & r_{sim}[N][N] \\
+	\end{bmatrix}
+	\cdot
+	\left[ 
+		\begin{array}{c}
+			p[0] \\
+			p[1] \\
+			\vdots	\\
+			p[N] \\
+		\end{array}
+	\right]
+\end{equation}
+%
+In Eq. (\ref{matrix_equation_triangle_simulated}), $p$ is the vector of fit parameters of \textbf{Horst}, which are related to the original spectrum by
+%
+\begin{equation}
+	s = N_\mathrm{sim} \cdot p
+\end{equation}
+%
+State of the art Monte-Carlo (MC) simulations of the detector response require a lot of computing power because one would like to keep the statistical uncertainty small, which is introduced by them (see also Sec. \ref{Uncertainty}).
+They are commonly used for applications where the interaction of particles with matter is of interest, therefore we will restrict the following discussion to MC-simulated response functions and consider that they may have a significant statistical uncertainty.
+Often, simulating all the energy bins $E_i$ of a detected spectrum would take a lot of time, whereas the dependence of the response on the energy may be very weak.
+If, for a sufficiently small step in energy,
+%
+\begin{equation}
+\label{weak_energy_dependence}
+r[E_i \pm \Delta_E][E_j] \approx r[E_i][E_j]
+\end{equation}
+%
+holds, a simulation for a particular energy $E_i$ can be used for a whole energy region $\left[ E_i - \Delta E, E_i + \Delta E \right]$.
+For example if the response of a detector to the energies $E_0$ and $E_1$ is approximately the same, Eq. (\ref{matrix_equation_triangle_simulated}) can be modified by re-using the first row:
+%
+\begin{equation}
+	\label{matrix_equation_triangle_approximation}
+	\left[ 
+		\begin{array}{c}
+			\tilde{s}[0] \\
+			\tilde{s}[1] \\
+			\vdots	\\
+			\tilde{s}[N] \\
+		\end{array}
+	\right]
+	= 
+	\begin{bmatrix}
+		r_{sim}[0][0] & r_{sim}[0][1] & \hdots & r_{sim}[0][N] \\
+		0       & r_{sim}[0][1] & \vdots & r_{sim}[0][N] \\
+		\vdots  & \ddots  & \ddots & \vdots  \\
+		0       & 0       & \ddots & r_{sim}[N][N] \\
+	\end{bmatrix}
+	\cdot
+	\left[ 
+		\begin{array}{c}
+			p[0] \\
+			p[1] \\
+			\vdots	\\
+			p[N] \\
+		\end{array}
+	\right]
+\end{equation}
+%
+If \textbf{Horst} is given a set of simulations whose energy steps are too coarse for the desired resolution, it will apply Eq. (\ref{weak_energy_dependence}) as well and take the closes simulated energy for each bin of the spectrum.
+This choice is not done during runtime, but already when the response matrix is built up from simulated responses.
 
-This is why the response matrices of \textbf{Horst} contain entries which are larger than one most of the time, although one would expect that the efficiency should be lower or equal to one for all energies.
+\textit{(Now, one might ask the question: If so many preparatory steps are taken when assembling the response matrix, then why not divide by the factor $N_\mathrm{sim}$ as well to get $s$ directly from the fitting process?
+The reason is that one still needs to know the statistical fluctuations $\Delta r_\mathrm{sim}[i][j]$ of the entries of $r_\mathrm{sim}$, which can be calculated as $\sqrt{ \Delta r[i][j] }$.).}
 
-Therefore, the correspondence between the fit parameters and the original spectrum is not as direct as stated above, but they need to be multiplied with a factor of $N_\mathrm{sim}$.
 
-If the efficiency of a detector is sufficiently small, this makes it hard to show original and reconstructed spectrum in the same plot.
-Therefore, \textbf{Horst} shows and outputs an additional kind of plot, which shows the fit parameters multiplied with only the full-energy peaks in the simulation.
-This auxiliary histogram will have a comparable order of magnitude as the detected spectrum, however it is not the same as the reconstructed spectrum, not even different from it by only a factor.
+\section{Uncertainty}
+\label{Uncertainty}
 \end{document}
