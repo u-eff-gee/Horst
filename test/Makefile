@@ -6,7 +6,7 @@ EXE=create_test_data
 
 CPP = g++
 CPPFLAGS = -O3 -Wall -Wextra -Wshadow -std=c++11 -I$(INCDIR)
-ROOTFLAGS=`root-config --cflags --glibs`
+ROOTFLAGS = -isystem$(shell root-config --incdir) -L$(shell root-config --libdir) -lCore -lRIO -lHist 
 
 _DEPS = ConfigTest.h ResponseMatrixCreator.h SpectrumCreator.h 
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS))

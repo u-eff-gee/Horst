@@ -39,7 +39,7 @@ In particle detection experiments, the real particle spectrum will be distorted 
 To install `Horst` and all auxiliary programs, clone the repository by typing:
 
 ```
-$ git clone https://github.com/uga-uga/Horst.git
+$ git clone https://github.com/uga-uga/horst.git
 ```
 
 After that enter the newly created `Horst/` directory and execute `make`:
@@ -83,7 +83,7 @@ $ make
 This Makefile contains a `make clean` option as well. The `make` command creates an executable called `create_test_data`.
 The number of bins `NBINS` (see also sec. [Usage](#usage)) of the test spectrum and response matrix is hard-coded in the file `horst/test/include/ConfigTest.h`. Note that in order to process the output of `create_test_data` by `Horst` or `Tsroh`, this setting must be the same in both codes.
 
-User-defined response function and spectrum can be hard-coded as member functions of the corresponding classes `SpectrumCreator` and `ResponseMatrixCreator`. 
+User-defined response functions and spectra can be hard-coded as member functions of the corresponding classes `SpectrumCreator` and `ResponseMatrixCreator`. 
 
 After changing anything in the source code of `create_test_data`, the code needs to be recompiled.
 
