@@ -8,7 +8,7 @@ EXE = horst
 
 CPP = g++
 CPPFLAGS = -O3 -Wall -Wextra -Wshadow -std=c++11 -I$(INCDIR)
-ROOTFLAGS=`root-config --cflags --glibs`
+ROOTFLAGS = -isystem$(shell root-config --incdir) -L$(shell root-config --libdir) -lCore -lRIO -lHist -lGpad -lMatrix -lMathCore 
 
 _DEPS = Config.h FitFunction.h Fitter.h InputFileReader.h MakeMatrix.h MonteCarloUncertainty.h Reconstructor.h Uncertainty.h
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS)) 

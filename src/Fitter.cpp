@@ -31,7 +31,7 @@ using std::vector;
 
 void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t binstart, Int_t binstop){
 
-	TH1F topdown_unfolded_spectrum("topdown_unfolded_spectru", "Unfolded_Spectrum_TopDown", (Int_t) NBINS/BINNING, 0., (Double_t) NBINS - 1);
+	TH1F topdown_unfolded_spectrum("topdown_unfolded_spectru", "Unfolded_Spectrum_TopDown", (Int_t) NBINS/ (Int_t) BINNING, 0., (Double_t) NBINS - 1);
 
 	Double_t parameter = 0.;
 	for(Int_t i = 0; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
@@ -52,7 +52,7 @@ void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t
 void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit_uncertainty, Int_t binstart, Int_t binstop, const Bool_t verbose, const Bool_t correlation, TMatrixDSym &correlation_matrix){
 
 	FitFunction fitFunction(rema, BINNING, binstart, binstop);
-	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, NBINS/BINNING);
+	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, (Int_t) NBINS/ (Int_t) BINNING);
 
 	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
 
@@ -93,7 +93,7 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, Int_t binstart, Int_t binstop){
 
 	FitFunction fitFunction(rema, BINNING, binstart, binstop);
-	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, NBINS/BINNING);
+	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, (Int_t) NBINS/ (Int_t) BINNING);
 
 	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
 
@@ -122,9 +122,9 @@ void Fitter::fittedFEP(const TH1F &params, const TH2F &rema, TH1F &fitted_FEP){
 
 void Fitter::fittedSpectrum(const TH1F &params, const TH2F &rema, TH1F &fitted_spectrum){
 
-	FitFunction fitFunction(rema, BINNING, 0, (Int_t) NBINS/BINNING);	
+	FitFunction fitFunction(rema, BINNING, 0, (Int_t) NBINS/ (Int_t) BINNING);	
 
-	vector<Double_t> parameters((Int_t) NBINS/ (Int_t) BINNING + 1);
+	vector<Double_t> parameters((long unsigned int) NBINS/ (long unsigned int) BINNING + 1);
 	for(Int_t i = 1; i <= (Int_t) NBINS/ (Int_t) BINNING; ++i)
 		parameters[(long unsigned int) i] = params.GetBinContent(i);
 

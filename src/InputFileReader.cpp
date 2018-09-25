@@ -100,7 +100,7 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 		}
 
 		// Fill number of simulated particles into TH1F
-		n_simulated_particles.SetBinContent(i, n_particles[best_simulation]);
+		n_simulated_particles.SetBinContent(i, n_particles[(long unsigned int) best_simulation]);
 
 		inputFile->Close();
 	}
