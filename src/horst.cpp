@@ -143,6 +143,7 @@ int main(int argc, char* argv[]){
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
 
 	// TopDown algorithm
+
 	TH1F topdown_params("topdown_params", "TopDown Parameters",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 	TH1F topdown_FEP("topdown_FEP", "TopDown FEP",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
 	TH1F topdown_fit("topdown_fit", "TopDown Fit",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
@@ -347,12 +348,21 @@ int main(int argc, char* argv[]){
 	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
 	spectrum.Write();
 	if(arguments.use_mc && arguments.write_mc){
+        TDirectory *td_mc = outputfile.mkdir("monte_carlo");
+        td_mc->cd();
+        TDirectory *td_mc_spectra = td_mc->mkdir("spectra");
+        td_mc_spectra->cd();
 		for(auto s : mc_spectra)
 			s.Write();
+        TDirectory *td_mc_reconstructed_spectra = td_mc->mkdir("reconstructed_spectra");
+        td_mc_reconstructed_spectra->cd();
 		for(auto s : mc_reconstructed_spectra)
 			s.Write();
+        outputfile.cd();
 	}
 
+    TDirectory *td_topdown = outputfile.mkdir("topdown");
+    td_topdown->cd();
 	topdown_params.Write();
 	topdown_FEP.Write();
 	topdown_fit.Write();
@@ -360,7 +370,10 @@ int main(int argc, char* argv[]){
 	topdown_spectrum_uncertainty.Write();
 	topdown_total_uncertainty.Write();
 	topdown_spectrum_reconstructed.Write();
+    outputfile.cd();
 
+    TDirectory * td_fit = outputfile.mkdir("fit");
+    td_fit->cd();
 	fit_params.Write();
 	fit_FEP.Write();
 	fit_result.Write();
@@ -371,6 +384,7 @@ int main(int argc, char* argv[]){
 		fit_spectrum_uncertainty.Write();
 		fit_total_uncertainty.Write();
 	}
+    outputfile.cd();
 
 	n_simulated_particles.Write();
 	spectrum_reconstructed.Write();
