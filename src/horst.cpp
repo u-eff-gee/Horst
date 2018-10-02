@@ -240,9 +240,7 @@ int main(int argc, char* argv[]){
 			monteCarloUncertainty.apply_fluctuations(mc_spectra[i], spectrum, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
 			histname.str("");
 
-
-			fitter.fit(mc_spectra[i], response_matrix, topdown_params, fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
-
+			fitter.fit(mc_spectra[i], response_matrix, fit_params, fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
 
 			histname << "mc_reconstructed_spectrum_" << i;
 			mc_reconstructed_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), (Int_t) NBINS/ (Int_t) arguments.binning,  0., (Double_t) NBINS - 1));
