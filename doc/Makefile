@@ -5,5 +5,6 @@ doc.pdf: doc.tex
 clean:
 	rm doc.aux
 	rm doc.log
+	rm doc.out
 	rm doc.pdf
 	rm doc.toc

@@ -1,6 +1,7 @@
 \documentclass{article}
 
 \usepackage{amsmath}
+\usepackage{hyperref}
 
 \begin{document}
 
@@ -267,7 +268,11 @@ There are three sources of uncertainy in the process described above:
 	\item The systematic uncertainty of the minimization algorithm $\Delta p[i]$
 \end{enumerate}
 
-In principle, number 2 and 3 can be made arbitrarily small at any time by exercising more computing power. Number 1, however, is the given measured spectrum which one has to work with.
+In principle, number 2 and 3 can be made arbitrarily small at any time by exercising more computing power. 
+Number 1, however, is the given by the measured spectrum that one has to work with.
+
+\textbf{Horst} outputs all three of them separately for comparison, if executed with the standard options.
+In the case of Monte-Carlo uncertainty propagation, which is described below, the results of the $-u$ and $-U$ option should be compared to see the interplay of 1 and 2.
 
 The systematic uncertainty of the fit can be obtained from the minimization algorithm in most cases.
 \textbf{Horst} uses the estimation given by \textbf{ROOT}.
@@ -305,25 +310,22 @@ using $\Delta r[i][j]$ and $\Delta \tilde{s} [i]$ from Eq. (\ref{simulation_unce
 If the uncertainty of the parameters $q$ are known, they can also be included by introducing $\Delta q[i]$, which creates a new term in the square-root of Eq. (\ref{topdown_uncertainty}).
 This is used by \textbf{Horst} as an approximation of the uncertainty of the reconstruction procedure.
 
-However, if the parameters are strongly calculated, which is easily possible of the matrix elements are of similar magnitude, then this approach may be false in either direction, depending on whether the correlations are destructive or constructive.
+However, if the parameters are strongly calculated, which is easily possible if the matrix elements are of similar magnitude, then this approach may be false in either direction, depending on whether the correlations are destructive or constructive.
 The most straightforward way to incorporate such correlations is to use Monte-Carlo propagation of uncertainty.
 This method assumes that the input parameters (here: $\tilde{s}$, $r$ and $q$) follow a probability distribution which is known or can be estimated.
-The the final result (here: $s$) is obtained from these input parameters by algebraic manipulations (here: the product of a matrix with a vector).
+The final result (here: $s$) is obtained from these input parameters by algebraic manipulations (here: the product of a matrix with a vector).
 By sampling many input parameters from their probability distribution and repeating the algebra over and over again, a probability distribution for the resulting quantity can be obtained, which contains all the correlations that are introduced by the calculation.
 
-\textbf{Horst} also employs this method to get an accurate estimate of the uncertainty of the reconstructed spectrum.
-At the moment, it is assumed that the uncertainties of the fit and the simulation are negligible compared to the simulation.
-The former can be justified, because the fit parameters are already driven towards a sensible minimum by the TopDown algorithm.
-If the TopDown algorithm already yields obviously bad results (e.g. negative bin contents), then there is either a problem with the response simulations, or statistics in the spectrum are so low, that they dominate anyway.
-The latter can in principle be made negligible simply by simulating longer, so that the statistical uncertainty of the simulation is negligible compared to the systematic uncertainty of the model.
-Therefore, \textbf{Horst} applies the Monte-Carlo method by assuming a normal distribution $\mathcal{N}(\mu [i], \sigma [i])$ for the content of each bin of the detected spectrum $\tilde{s}[i]$, with the mean value:
+\textbf{Horst} can also employ this method to get an accurate estimate of the uncertainty of the reconstructed spectrum.
+It is implemented by assuming a Poisson distribution $\mathcal{P}(\mu[i])$ for the content of each bin of the detected spectrum $\tilde{s}[i]$, with the mean value:
 %
 \begin{equation}
 	\label{mc_spectrum_mu}
 	\mu [i] \approx \tilde{s}[i]
 \end{equation}
 %
-and the standard deviation:
+A Poisson distribution is the typical distribution of results in a counting experiments where every single event occurs independently of the others.
+For large values $\mu[i] \geq 10$, it converges to a normal distribution $\mathcal{N}(\mu[i], \sigma[i])$ with the mean value given by Eq. \ref{mc_spectrum_mu} and a standard deviation of:
 %
 \begin{equation}
 	\label{mc_spectrum_sigma}
@@ -332,11 +334,9 @@ and the standard deviation:
 %
 \textit{(In the case that $\tilde {s} [i] = 0$, $\sigma$ is also set to zero at the moment. However, since the measured spectrum is often very smooth, this might be changed by adapting the uncertainty of surrounding bins.)}
 
-In each Monte-Carlo iteration, a new detected spectrum is sampled from these normally distributed bins, and fit using the response matrix.
-Doing the same for the response matrix would require already $N \times N$ samplings and increase the computational effort a lot.
-This is why it is assumed that the statistical uncertainty of the simulation is negligible.
+In each Monte-Carlo iteration, a new detected spectrum and a new response matrix are sampled, assuming the mean value of the distribution is given by Eq. \ref{mc_spectrum_mu}.
 In the end, a set of values for each bin $s[i]$ is obtained.
 \textit{Horst} will return the mean value and the standard deviation of this set.
-For the complete inclusion of correlations by the Monte-Carlo method, one has to pay the price of a linearly increasing computing time of \textit{}Horst with the number of iterations.
+For the complete inclusion of correlations by the Monte-Carlo method, one has to pay the price of a linearly increasing computing time of \textit{Horst} with the number of iterations.
 If several similar calculations need to be done, it is always useful to compare the Gaussian uncertainty propagation and the Monte-Carlo method to see whether the improvement is actually significant.
 \end{document}

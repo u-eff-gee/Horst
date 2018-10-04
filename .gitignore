@@ -25,5 +25,6 @@ test/create_test_data
 # LaTex output
 doc/doc.aux
 doc/doc.log
+doc/doc.out
 doc/doc.pdf
 doc/doc.toc
