@@ -22,12 +22,12 @@
 #include "Config.h"
 #include "MonteCarloUncertainty.h"
 
+#define USE_POISSON 1
+
 using std::vector;
 
 using ROOT::Math::normal_cdf;
 using ROOT::Math::normal_quantile;
-
-#define USE_POISSON 1
 
 void MonteCarloUncertainty::getSpectrumUncertainty(TH1F &mc_reconstruction_mean, TH1F &mc_spectrum_uncertainty, const vector<TH1F> &mc_reconstructed_spectra, const Int_t binstart, const Int_t binstop){
 	const UInt_t nrandom = (UInt_t) mc_reconstructed_spectra.size();
@@ -51,7 +51,6 @@ void MonteCarloUncertainty::getSpectrumUncertainty(TH1F &mc_reconstruction_mean,
 }
 
 void MonteCarloUncertainty::apply_fluctuations(TH1F &modified_spectrum, const TH1F &spectrum, const Int_t binstart, const Int_t binstop){
-	Double_t mu = 0.;
 	// The content of each bin in a measured spectrum is a random sample from a distribution.
 	// The experiment is assumed to be a statistical counting experiment of uncorrelated events, where the underlying distribution is a Poissonian distribution P(lambda) with mean value lambda.
 	// To simulate the influence of counting statistics on the measured spectrum, assume that the actually measured value of a bin is the mean value lambda of the Poissonian distribution, and sample a new value from it.
@@ -62,6 +61,7 @@ void MonteCarloUncertainty::apply_fluctuations(TH1F &modified_spectrum, const TH
 	// In the history of 'horst', the normal distribution was used first.
 	// However, it was decided to switch to the more general Poissonian distribution.
 	// The old implementation is kept here and it can be switched on using the preprocessor variable USE_POISSON
+	Double_t mu = 0.;
 #ifndef USE_POISSON
 	Double_t sigma = 0.;
 #endif
@@ -81,8 +81,23 @@ void MonteCarloUncertainty::apply_fluctuations(TH1F &modified_spectrum, const TH
 			modified_spectrum.SetBinContent(i, get_positive_random_normal(mu, sigma));
 #endif
 #ifdef USE_POISSON
-			modified_spectrum.SetBinContent(i, get_random_poisson(mu));
+			modified_spectrum.SetBinContent(i, get_random_poisson((Int_t) round(mu)));
 #endif
+		}
+	}
+}
+
+void MonteCarloUncertainty::apply_fluctuations(TH2F &modified_response_matrix, const TH2F &response_matrix, const Int_t binstart, const Int_t binstop){
+	Double_t mu = 0.;
+
+	for(Int_t i = binstart; i <= binstop; ++i){
+		for(Int_t j = binstart; j <= binstop; ++j){
+			mu = response_matrix.GetBinContent(i, j);
+			if(mu == 0.){
+				modified_response_matrix.SetBinContent(i, j, 0.);
+			} else{
+				modified_response_matrix.SetBinContent(i, j, get_random_poisson((Int_t) round(mu)));
+			}
 		}
 	}
 }
