@@ -31,7 +31,7 @@ using std::vector;
 
 void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t binstart, Int_t binstop){
 
-	TH1F topdown_unfolded_spectrum("topdown_unfolded_spectru", "Unfolded_Spectrum_TopDown", (Int_t) NBINS/ (Int_t) BINNING, 0., (Double_t) NBINS - 1);
+	TH1F topdown_unfolded_spectrum("topdown_unfolded_spectrum", "Unfolded_Spectrum_TopDown", (Int_t) NBINS/ (Int_t) BINNING, 0., (Double_t) NBINS - 1);
 
 	Double_t parameter = 0.;
 	for(Int_t i = 0; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
@@ -57,7 +57,7 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
 
 	for(Int_t i = 0; i <= start_params.GetNbinsX(); ++i){
-		if(i < binstart || i > binstop){
+		if(i < binstart || i >= binstop){
 			fitf.FixParameter(i, 0.);
 		} else{
 			fitf.SetParameter(i, start_params.GetBinContent(i));
@@ -68,17 +68,17 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 	TFitResultPtr fit_result;
 	if(verbose){
 		if(correlation){
-			fit_result = spectrum.Fit("fitf", "S0N", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+			fit_result = spectrum.Fit("fitf", "S0N", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
 			correlation_matrix = fit_result->GetCorrelationMatrix();
 		} else{
-			spectrum.Fit("fitf", "0N", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+			spectrum.Fit("fitf", "0N", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
 		}
 	} else{
 		if(correlation){
-			fit_result = spectrum.Fit("fitf", "S0QN", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+			fit_result = spectrum.Fit("fitf", "S0QN", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
 			correlation_matrix = fit_result->GetCorrelationMatrix();
 		} else{
-			spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+			spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
 		}
 	}
 
@@ -98,7 +98,7 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
 
 	for(Int_t i = 0; i <= start_params.GetNbinsX(); ++i){
-		if(i < binstart || i > binstop){
+		if(i < binstart || i >= binstop){
 			fitf.FixParameter(i, 0.);
 		} else{
 			fitf.SetParameter(i, start_params.GetBinContent(i));
@@ -107,7 +107,7 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 
 	}
 
-	spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) (binstop + 1)*BINNING);
+	spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
 
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
 		params.SetBinContent(i, fitf.GetParameter(i-1));
