@@ -402,11 +402,11 @@ int main(int argc, char* argv[]){
 		inputFileReader.writeCorrelationMatrix(correlation_matrix, outputfilename.str().c_str());
 	}
 
+	time(&stop);
+	cout << "> Execution time: " << stop - start << " seconds" << endl;
+
 	if(arguments.interactive_mode){
 		cout << "> Starting interactive plot ..." << endl;
 		app->Run();
 	}
-
-	time(&stop);
-	cout << "> Execution time: " << stop - start << " seconds" << endl;
 }

@@ -145,5 +145,5 @@ void Fitter::remove_negative(TH1F &hist){
 }
 
 void Fitter::print_fitresult() const {
-	cout << "> Fit result: Chi^2 = " << chi2 << endl;
+	cout << "> Fit result: Chi^2 = " << chi2 << " (care is to be taken with the interpretation of this value) " << endl;
 }

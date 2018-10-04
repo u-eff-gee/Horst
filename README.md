@@ -126,24 +126,30 @@ There are further options available to change the binning factor, get a better u
 $ ./horst --help
 ```
 
-`Horst` will first try to reconstruct the spectrum using a simple TopDown algorithm. The result from the TopDown fit will be used as start parameters for a constrained fit of the original spectrum. After that, `Horst` creates a ROOT output file in `Horst/output/` which contains several TH1F histograms with `NBINS/BINNING` bins:
+`Horst` will first try to reconstruct the spectrum using a simple TopDown algorithm. The result from the TopDown fit will be used as start parameters for a constrained fit of the original spectrum. After that, `Horst` creates a ROOT output file in `Horst/output/` which contains several TH1F histograms with `NBINS/BINNING` bins.
+The main results can be found in the top-level directory of the ROOT file:
 
  * `spectrum`: The rebinned input spectrum
  * `spectrum_reconstructed`: The reconstructed original spectrum. Using the original number of simulated particles (see [below](#usage_makematrix)), this also contains the influence of the detection efficiency, which makes it different from the `_FEP` histogram.
- * `*_fit`: The fitted function
+  * `reconstruction_uncertainty`: The uncertainty of the reconstruction, which is a combination of all three uncertainties above. Also, `reconstruction_uncertainty_low` and `*_reconstruction_uncertainty_up` exist, which are the reconstructed spectrum with the uncertainty subtracted/added.
+
+Furthermore, directories called `topdown/` and `fit/` exist, which contain information about the TopDown reconstruction and the actual fit (replace an asterisk by `topdown` or `fit`):
+
+ * `topdown_fit` or `fit_result`: The fitted function
  * `*_params`: The fit parameters
  * `*_FEP`: The full-energy peaks of the fitted function (= the parameters multiplied with the corresponding full-energy peaks of the simulation)
  * `*_simulation_uncertainty`: The uncertainty which is caused by the statistical uncertainty of the Geant4 Monte-Carlo simulation
  * `*_fit_uncertainty`: The uncertainty of the fitting procedure determined by a Chi^2 test. Does not exist for TopDown, because the solution is unambiguous.
  * `*_statistical_uncertainty`: The uncertainty which comes from the statistics in the input spectrum.
- * `*_reconstruction_uncertainty`: The uncertainty of the reconstruction, which is a combination of all three uncertainties above. Also, `_reconstruction_uncertainty_low` and `_reconstruction_uncertainty_up` exist, which are the reconstructed spectrum with the uncertainty subtracted/added.
  * `*_total_uncertainty`: The total uncertainty of the fit (Note that the fit and the reconstructed spectrum are different things)
 
 If the Monte-Carlo uncertainty estimation option `-u NRANDOM`, using `NRANDOM` iterations, is activated, `NRANDOM` spectra are generated from which the same number of reconstructed spectra is calculated. All those can be saved to a file as well (maybe if a user wants to do a more sophisticated analysis of their distributions than just taking the mean value and the standard deviation) using the `-w` option.
-They can follow the name convention:
+They can be found in additional `monte_carlo/spectra` and `monte_carlo/reconstructed_spectra` directories and follow the name convention:
 
  * `*_mc_spectrum_NRANDOM`: Input spectrum from Monte-Carlo iteration #`NRANDOM`
  * `*_mc_reconstructed_spectrum_NRANDOM`: Reconstructed spectrum from Monte-Carlo iteration #`NRANDOM`
+
+If the `-u` option is used, `fit/fit_uncertainty` and `fit/spectrum_uncertainty` and replaced by `fit/mc_fit_uncertainty` and `fit/mc_spectrum_uncertainty`. Since `fit/mc_spectrum_uncertainty` already contains the influence of the statistical uncertainty of both the spectrum and the response matrix, an analog to `fit_simulation_uncertainty` does not exist in this case.
 
 ### 4.2 Tsroh <a name="usage_tsroh"></a>
 
