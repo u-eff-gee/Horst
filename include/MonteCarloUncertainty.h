@@ -37,6 +37,7 @@ public:
 
 private:
 	Double_t get_positive_random_normal(Double_t mu, Double_t sigma) const;	
+	Double_t get_random_poisson(Int_t mean) const;	
 	Double_t get_mean(vector<Double_t> &values) const;
 	Double_t get_stdev(vector<Double_t> &values, Double_t mean) const;
 
