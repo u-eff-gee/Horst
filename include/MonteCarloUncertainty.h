@@ -29,7 +29,7 @@ using std::vector;
 
 class MonteCarloUncertainty{
 public:
-	MonteCarloUncertainty(const UInt_t binning): BINNING(binning) { random_generator = new TRandom3(); };
+	MonteCarloUncertainty(const UInt_t binning, const UInt_t seed): BINNING(binning) { random_generator = new TRandom3(seed); };
 	~MonteCarloUncertainty(){ delete random_generator; };
 
 	void apply_fluctuations(TH1F &modified_spectrum, const TH1F &spectrum, const Int_t binstart, const Int_t binstop);

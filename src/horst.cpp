@@ -47,7 +47,9 @@ struct Arguments{
 	TString spectrumname = "";
 	TString matrixfile = "";
 	UInt_t uncertainty_mc = 1;
+	UInt_t seed = 1;
 	Bool_t use_mc = false;
+	Bool_t use_mc_fast = false;
 	Bool_t write_mc = false;
 	TString correlation_matrix_filename = "correlation_matrix.txt";
 	TString outputfile = "output.root";
@@ -66,6 +68,7 @@ static struct argp_option options[] = {
 	{"binning", 'b', "BINNING", 0, "a) Without '-t' option: Rebinning factor for input spectrum and response matrix (default: 10)\nb) With '-t' option   : Rebinning factor for response matrix (default: 10)", 0},
 	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix", 0},
 	{"uncertainty_mc", 'u', "NRANDOM", 0, "Determine uncertainty using a Monte-Carlo (MC) method to include correlations. NRANDOM is the number of MC iterations (default: 10).", 0},
+	{"uncertainty_mc_fast", 'U', "NRANDOM", 0, "Similar to '-u' option, but do not vary the response matrix when estimating the statistical uncertainty. This option can be used to disentangle the statistical uncertainty introduced by the input spectrum and the response matrix. Overrides the '-u' option if both are set.", 0},
 	{"write_mc", 'w', 0, 0, "Write MC-generated spectra and reconstructed spectra. This option is ignored if '-u' option is not used.", 0},
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"left", 'l', "LEFT", 0, "Left limit of fit range", 0},
@@ -74,6 +77,7 @@ static struct argp_option options[] = {
 	{"tfile", 't', "SPECTRUM", 0, "Select SPECTRUM from a ROOT file called INPUTFILENAME, instead of a text file."
 	" Spectrum must be an object of TH1F.", 0},
 	{"correlation", 'c', "CORRELATIONFILENAME", 0, "Write the correlation matrix of the fit to the specified output file. If the '-u' option is used, only one correlation matrix will be written, although NRANDOM fits are executed.", 0},
+	{"seed", 's', "SEED", 0, "Set the random number seed (default: 1)", 0},
 	{"verbose", 'v', 0, 0, "Enable ROOT to print verbose information about the fitting process", 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
@@ -86,6 +90,7 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'b': arguments->binning= (UInt_t) atoi(arg); break;
 		case 'm': arguments->matrixfile= arg; break;
 		case 'u': arguments->use_mc = true; arguments->uncertainty_mc = (UInt_t) atoi(arg); break;
+		case 'U': arguments->use_mc_fast = true; arguments->use_mc = true; arguments->uncertainty_mc = (UInt_t) atoi(arg); break;
 		case 'w': arguments->write_mc = true; break;
 		case 'o': arguments->outputfile = arg; break;
 		case 'l': arguments->left= (UInt_t) atoi(arg); break;
@@ -93,6 +98,7 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'i': arguments->interactive_mode= true; break;
 		case 't': arguments->tfile = true; arguments->spectrumname = arg; break;
 		case 'c': arguments->correlation = true; arguments->correlation_matrix_filename = arg; break;
+		case 's': arguments->seed = (UInt_t) atoi(arg); break;
 		case 'v': arguments->verbose = true; break;
 		case ARGP_KEY_END:
 			if(state->arg_num == 0){
@@ -126,7 +132,7 @@ int main(int argc, char* argv[]){
 	TMatrixDSym correlation_matrix((Int_t) NBINS / (Int_t) arguments.binning);
 	Fitter fitter(arguments.binning);
 	Reconstructor reconstructor(arguments.binning);
-	MonteCarloUncertainty monteCarloUncertainty(arguments.binning);
+	MonteCarloUncertainty monteCarloUncertainty(arguments.binning, arguments.seed);
 
 	/************ Initialize histograms *************/
 
@@ -234,17 +240,23 @@ int main(int argc, char* argv[]){
 		cout << "> Using Monte-Carlo algorithm to determine fit uncertainty (NRANDOM == " << arguments.uncertainty_mc << ")" << endl;
 
 		stringstream histname("");
-		mc_matrix = TH2F("modified_response_matrix", "MC ResponseMatrix", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) (NBINS - 1), (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) (NBINS - 1));
+		if(!arguments.use_mc_fast){
+			mc_matrix = TH2F("modified_response_matrix", "MC ResponseMatrix", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) (NBINS - 1), (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) (NBINS - 1));
+		}
 
 		for(UInt_t i = 0; i < arguments.uncertainty_mc; ++i){
 			histname << "mc_spectrum_" << i;
 			mc_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), (Int_t) NBINS/ (Int_t) arguments.binning,  0., (Double_t) NBINS - 1));
 			monteCarloUncertainty.apply_fluctuations(mc_spectra[i], spectrum, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
-			monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+
+			if(arguments.use_mc_fast){
+				fitter.fit(mc_spectra[i], response_matrix, fit_params, fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+			} else{
+				monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+				fitter.fit(mc_spectra[i], mc_matrix, fit_params, fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+			}
+
 			histname.str("");
-
-			fitter.fit(mc_spectra[i], response_matrix, fit_params, fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
-
 			histname << "mc_reconstructed_spectrum_" << i;
 			mc_reconstructed_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), (Int_t) NBINS/ (Int_t) arguments.binning,  0., (Double_t) NBINS - 1));
 			reconstructor.reconstruct(fit_params, n_simulated_particles, mc_reconstructed_spectra[i]);
