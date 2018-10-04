@@ -6,7 +6,8 @@ const int NBINS = 12000;
 
 // Parameters for the spectrum models:
 
-const vector<double> bar_params = {1e5, 9000., 200.};
+const vector<double> bar_params = {1e7, 9000., 200.};
+const vector<double> normal_params = {1e7, 9000., 200.};
 
 // Parameters for the response matrix models:
 

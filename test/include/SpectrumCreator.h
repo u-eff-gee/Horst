@@ -36,6 +36,7 @@ public:
 	void createSpectrum(TH1F &spectrum, const string option);
 
 	void createBarSpectrum(TH1F &spectrum, const vector<Double_t> &params);
+	void createNormalSpectrum(TH1F &spectrum, const vector<Double_t> &params);
 };
 
 #endif
