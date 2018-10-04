@@ -32,7 +32,7 @@ void SpectrumCreator::createBarSpectrum(TH1F &spectrum, const vector<Double_t> &
 			spectrum.SetBinContent(i, 0.);
 	}
 
-	TF1 *constant_function = new TF1("const", "1", 0., NBINS);
+	TF1 *constant_function = new TF1("const", "[&](double *x, double *p){ return 1.; }", 0., NBINS, 0);
 
 	// Normalize spectrum to 1
 	spectrum.Multiply(constant_function, 1./spectrum.Integral());
