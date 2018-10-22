@@ -17,13 +17,10 @@ output/*
 build/
 
 # Compiled files
-test/obj/*.o
-!test/obj/.o
 horst
 makematrix
 convert_to_txt
 tsroh
-test/create_test_data
 
 # LaTex output
 doc/doc.aux
