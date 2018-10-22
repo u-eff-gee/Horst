@@ -29,23 +29,23 @@ using std::vector;
 using ROOT::Math::normal_cdf;
 using ROOT::Math::normal_quantile;
 
-void MonteCarloUncertainty::getSpectrumUncertainty(TH1F &mc_reconstruction_mean, TH1F &mc_spectrum_uncertainty, const vector<TH1F> &mc_reconstructed_spectra, const Int_t binstart, const Int_t binstop){
-	const UInt_t nrandom = (UInt_t) mc_reconstructed_spectra.size();
+void MonteCarloUncertainty::evaluateMeanAndStd(TH1F &mc_mean, TH1F &mc_standard_deviation, const vector<TH1F> &mc_histograms, const Int_t binstart, const Int_t binstop){
+	const UInt_t nrandom = (UInt_t) mc_histograms.size();
 
-	vector<Double_t> values;
+	vector<Double_t> values(nrandom, 0.);
+
 	for(UInt_t i = 1; i <= NBINS / BINNING; ++i){
 		if(i < (UInt_t) binstart || i > (UInt_t) binstop){
-			mc_reconstruction_mean.SetBinContent((Int_t) i, 0.);
-			mc_spectrum_uncertainty.SetBinContent((Int_t) i, 0.);
+			mc_mean.SetBinContent((Int_t) i, 0.);
+			mc_standard_deviation.SetBinContent((Int_t) i, 0.);
 		} else{
-			values = vector<Double_t>(nrandom, 0.);
 			for(UInt_t j = 0; j < nrandom; ++j){
-				values[j] = mc_reconstructed_spectra[j].GetBinContent((Int_t) i);
+				values[j] = mc_histograms[j].GetBinContent((Int_t) i);
 			}
 
 			Double_t mean = get_mean(values);
-			mc_reconstruction_mean.SetBinContent((Int_t) i, mean);
-			mc_spectrum_uncertainty.SetBinContent((Int_t) i, get_stdev(values, mean));
+			mc_mean.SetBinContent((Int_t) i, mean);
+			mc_standard_deviation.SetBinContent((Int_t) i, get_stdev(values, mean));
 		}
 	}
 }

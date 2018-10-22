@@ -154,6 +154,7 @@ int main(int argc, char* argv[]){
 
 	// Fit
 	TH1F fit_params("fit_params", "Fit Parameters",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F fit_params_uncertainty("fit_params_uncertainty", "Fit Parameters Uncertainty",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 	TH1F fit_uncertainty("fit_uncertainty", "Fit Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 	TH1F fit_FEP("fit_FEP", "Fit FEP",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
 	TH1F fit_result("fit_result", "Fit Result",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
@@ -168,11 +169,10 @@ int main(int argc, char* argv[]){
 
 	// Monte-Carlo Uncertainty
 	vector<TH1F> mc_spectra;
-	vector<TH1F> mc_reconstructed_spectra;
+	vector<TH1F> mc_fit_params;
 	TH2F mc_matrix;
-	TH1F mc_reconstruction_mean;
-	TH1F mc_fit_uncertainty;
-	TH1F mc_spectrum_uncertainty;
+	TH1F mc_fit_params_mean;
+	TH1F mc_fit_params_uncertainty;
 
 	/************ Start ROOT application *************/
 
@@ -221,7 +221,7 @@ int main(int argc, char* argv[]){
 
 	cout << "> Fit spectrum using TopDown parameters as start parameters ..." << endl;
 
-	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning, arguments.verbose, arguments.correlation, correlation_matrix);
+	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_params_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning, arguments.verbose, arguments.correlation, correlation_matrix);
 
 	fitter.print_fitresult();
 
@@ -251,9 +251,8 @@ int main(int argc, char* argv[]){
 			}
 
 			histname.str("");
-			histname << "mc_reconstructed_spectrum_" << i;
-			mc_reconstructed_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), (Int_t) NBINS/ (Int_t) arguments.binning,  0., (Double_t) NBINS - 1));
-			reconstructor.reconstruct(fit_params, n_simulated_particles, mc_reconstructed_spectra[i]);
+			histname << "mc_fit_params_" << i;
+			mc_fit_params.push_back(fit_params);
 			histname.str("");
 
 			if(i % MC_UPDATE_INTERVAL == 0 && i > 0)
@@ -269,24 +268,20 @@ int main(int argc, char* argv[]){
 
 		cout << "> Evaluating Monte-Carlo results ..." << endl;
 
-		mc_reconstruction_mean = TH1F("mc_reconstruction_mean", "MC Reconstructed Spectrum", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_spectrum_uncertainty = TH1F("mc_spectrum_uncertainty", "MC Spectrum Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_fit_uncertainty = TH1F("mc_fit_uncertainty", "MC Fit Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_fit_params_mean = TH1F("mc_fit_params_mean", "MC Fit Parameters", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_fit_params_uncertainty = TH1F("mc_fit_params_uncertainty", "MC Fit Parameters Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 
-		uncertainty.getUncertainty(fit_params, response_matrix, fit_simulation_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
-		monteCarloUncertainty.getSpectrumUncertainty(mc_reconstruction_mean, mc_spectrum_uncertainty, mc_reconstructed_spectra, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+		monteCarloUncertainty.evaluateMeanAndStd(mc_fit_params_mean, mc_fit_params_uncertainty, mc_fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
 
-		// Scale the fit_uncertainty by the fit_params as would be done in the reconstruction procedure.
-		// Since the MC methods gets the fit_spectrum_uncertainty directly by comparing the reconstructed spectra, which are already scaled, this is necessary.
-		// It would be better to determine the fit uncertainty of the MC fit first and determine the simulation uncertainty by an MC method as well.
-		reconstructor.uncertainty(fit_uncertainty, response_matrix, n_simulated_particles, mc_fit_uncertainty);
+		uncertainties.push_back(&fit_uncertainty);
+		uncertainties.push_back(&mc_fit_params_uncertainty);
+		uncertainty.getTotalUncertainty(uncertainties, fit_total_uncertainty);
 
-		uncertainties.push_back(&mc_fit_uncertainty);
-		uncertainties.push_back(&mc_spectrum_uncertainty);
-		uncertainty.getTotalUncertainty(uncertainties, reconstruction_uncertainty);
+		reconstructor.reconstruct(fit_total_uncertainty, n_simulated_particles, reconstruction_uncertainty);
 
 	} else{
 		uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+		fitter.fittedFEP(fit_params_uncertainty, response_matrix, fit_uncertainty);
 		uncertainties.push_back(&fit_uncertainty);
 		uncertainties.push_back(&fit_simulation_uncertainty);
 		uncertainties.push_back(&fit_spectrum_uncertainty);
@@ -359,7 +354,7 @@ int main(int argc, char* argv[]){
 				s.Write();
 		TDirectory *td_mc_reconstructed_spectra = td_mc->mkdir("reconstructed_spectra");
 		td_mc_reconstructed_spectra->cd();
-			for(auto s : mc_reconstructed_spectra)
+			for(auto s : mc_fit_params)
 				s.Write();
 		outputfile.cd();
 	}
@@ -377,20 +372,27 @@ int main(int argc, char* argv[]){
 
     TDirectory * td_fit = outputfile.mkdir("fit");
     td_fit->cd();
-	fit_params.Write();
+    	if(!arguments.use_mc){
+		fit_params.Write();
+	} else{
+		mc_fit_params_mean.Write();
+	}
 	fit_FEP.Write();
 	fit_result.Write();
 	// At the moment, it is not possible to obtain the spectrum uncertainty when using the MC method. Therefore, also fit_total_uncertainty is not useful.
 	if(!arguments.use_mc){
 		fit_simulation_uncertainty.Write();
 		fit_spectrum_uncertainty.Write();
-		fit_total_uncertainty.Write();
+		fit_params_uncertainty.Write();
 		fit_uncertainty.Write();
+		fit_total_uncertainty.Write();
 	} else{
-		mc_spectrum_uncertainty.Write();
-		mc_fit_uncertainty.Write();
+		mc_fit_params_uncertainty.Write();
+		fit_uncertainty.Write();
+		fit_total_uncertainty.Write();
 	}
-    outputfile.cd();
+
+    	outputfile.cd();
 
 	n_simulated_particles.Write();
 	spectrum_reconstructed.Write();

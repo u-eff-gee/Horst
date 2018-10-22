@@ -86,7 +86,7 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
 		params.SetBinContent(i, fitf.GetParameter(i-1));
-		fit_uncertainty.SetBinContent(i, fitf.GetParError(i-1)*rema.GetBinContent(i, i));
+		fit_uncertainty.SetBinContent(i, fitf.GetParError(i-1));
 	}
 }
 

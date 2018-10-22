@@ -34,7 +34,7 @@ public:
 
 	void apply_fluctuations(TH1F &modified_spectrum, const TH1F &spectrum, const Int_t binstart, const Int_t binstop);
 	void apply_fluctuations(TH2F &modified_response_matrix, const TH2F &response_matrix, const Int_t binstart, const Int_t binstop);
-	void getSpectrumUncertainty(TH1F &mc_reconstruction_mean, TH1F &mc_spectrum_uncertainty, const vector<TH1F> &mc_reconstructed_spectra, const Int_t binstart, const Int_t binstop);
+	void evaluateMeanAndStd(TH1F &mc_mean, TH1F &mc_standard_deviation, const vector<TH1F> &mc_histograms, const Int_t binstart, const Int_t binstop);
 
 private:
 	Double_t get_positive_random_normal(Double_t mu, Double_t sigma) const;	
