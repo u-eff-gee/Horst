@@ -6,14 +6,17 @@
 
 # Input
 *.txt
+!src/CMakeLists.txt
+!CMakeLists.txt
 
 # Output
 output/*
 !output/.o
 
+# Build directory
+build/
+
 # Compiled files
-obj/*.o
-!obj/.o
 test/obj/*.o
 !test/obj/.o
 horst
