@@ -169,10 +169,13 @@ int main(int argc, char* argv[]){
 
 	// Monte-Carlo Uncertainty
 	vector<TH1F> mc_spectra;
-	vector<TH1F> mc_fit_params;
+	vector<TH1F> mc_fit_params_samples;
 	TH2F mc_matrix;
-	TH1F mc_fit_params_mean;
-	TH1F mc_fit_params_uncertainty;
+	TH1F mc_fit_params, mc_fit_params_mean, mc_fit_params_uncertainty, mc_fit_total_uncertainty;
+	TH1F mc_fit_FEP, mc_fit_FEP_uncertainty;
+	TH1F mc_FEP_uncertainty_low, mc_FEP_uncertainty_up;
+	TH1F mc_spectrum_reconstructed, mc_reconstruction_uncertainty;
+	TH1F mc_reconstruction_uncertainty_low, mc_reconstruction_uncertainty_up;
 
 	/************ Start ROOT application *************/
 
@@ -238,21 +241,23 @@ int main(int argc, char* argv[]){
 			mc_matrix = TH2F("modified_response_matrix", "MC ResponseMatrix", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) (NBINS - 1), (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) (NBINS - 1));
 		}
 
+		mc_fit_params = TH1F ("mc_fit_params", "MC Fit Parameters",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+
 		for(UInt_t i = 0; i < arguments.uncertainty_mc; ++i){
 			histname << "mc_spectrum_" << i;
 			mc_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), (Int_t) NBINS/ (Int_t) arguments.binning,  0., (Double_t) NBINS - 1));
 			monteCarloUncertainty.apply_fluctuations(mc_spectra[i], spectrum, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
 
 			if(arguments.use_mc_fast){
-				fitter.fit(mc_spectra[i], response_matrix, fit_params, fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+				fitter.fit(mc_spectra[i], response_matrix, fit_params, mc_fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
 			} else{
 				monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
-				fitter.fit(mc_spectra[i], mc_matrix, fit_params, fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+				fitter.fit(mc_spectra[i], mc_matrix, fit_params, mc_fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
 			}
 
 			histname.str("");
 			histname << "mc_fit_params_" << i;
-			mc_fit_params.push_back(fit_params);
+			mc_fit_params_samples.push_back(mc_fit_params);
 			histname.str("");
 
 			if(i % MC_UPDATE_INTERVAL == 0 && i > 0)
@@ -260,37 +265,59 @@ int main(int argc, char* argv[]){
 		}
 		cout << "\t> Processed " << arguments.uncertainty_mc << " Monte-Carlo iterations" << endl;
 	}
-
-	// Uncertainties
+	/************ Uncertainties *************/
 
 	vector<TH1F*> uncertainties;
+
+	// Uncertainty of Monte-Carlo method
 	if(arguments.use_mc){
 
 		cout << "> Evaluating Monte-Carlo results ..." << endl;
 
 		mc_fit_params_mean = TH1F("mc_fit_params_mean", "MC Fit Parameters", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 		mc_fit_params_uncertainty = TH1F("mc_fit_params_uncertainty", "MC Fit Parameters Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_fit_total_uncertainty = TH1F("mc_fit_total_uncertainty", "MC Fit Total Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 
-		monteCarloUncertainty.evaluateMeanAndStd(mc_fit_params_mean, mc_fit_params_uncertainty, mc_fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+		mc_fit_FEP = TH1F("mc_fit_FEP", "MC Fit FEP", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_fit_FEP_uncertainty = TH1F("mc_fit_FEP_uncertainty", "MC Fit FEP Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_FEP_uncertainty_low = TH1F("mc_FEP_uncertainty_low", "MC Fit FEP Uncertainty lower Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_FEP_uncertainty_up = TH1F("mc_FEP_uncertainty_up", "MC Fit FEP Uncertainty upper Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
 
-		uncertainties.push_back(&fit_uncertainty);
+		mc_spectrum_reconstructed = TH1F("mc_spectrum_reconstructed", "MC Reconstructed Spectrum", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_reconstruction_uncertainty = TH1F("mc_reconstruction_uncertainty", "MC Reconstruction Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_reconstruction_uncertainty_low = TH1F("mc_reconstruction_uncertainty_low", "MC Reconstruction Uncertainty lower Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_reconstruction_uncertainty_up = TH1F("mc_reconstruction_uncertainty_up", "MC Reconstruction Uncertainty upper Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+
+		monteCarloUncertainty.evaluateMeanAndStd(mc_fit_params_mean, mc_fit_params_uncertainty, mc_fit_params_samples, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+
+		// Use the fit uncertainty from a single fit as an estimate for the uncertainty
+		// of the fitting algorithm
+		uncertainties.push_back(&fit_params_uncertainty);
 		uncertainties.push_back(&mc_fit_params_uncertainty);
-		uncertainty.getTotalUncertainty(uncertainties, fit_total_uncertainty);
+		uncertainty.getTotalUncertainty(uncertainties, mc_fit_total_uncertainty);
 
-		reconstructor.reconstruct(fit_total_uncertainty, n_simulated_particles, reconstruction_uncertainty);
+		fitter.fittedFEP(mc_fit_params_mean, response_matrix, mc_fit_FEP);
+		fitter.fittedFEP(mc_fit_params_uncertainty, response_matrix, mc_fit_FEP_uncertainty);
+		uncertainty.getLowerAndUpperLimit(mc_fit_FEP, mc_fit_FEP_uncertainty, mc_FEP_uncertainty_low, mc_FEP_uncertainty_up, true);
 
-	} else{
-		uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
-		fitter.fittedFEP(fit_params_uncertainty, response_matrix, fit_uncertainty);
-		uncertainties.push_back(&fit_uncertainty);
-		uncertainties.push_back(&fit_simulation_uncertainty);
-		uncertainties.push_back(&fit_spectrum_uncertainty);
-		uncertainty.getTotalUncertainty(uncertainties, fit_total_uncertainty);
+		reconstructor.reconstruct(mc_fit_params_mean, n_simulated_particles, mc_spectrum_reconstructed);
+		reconstructor.reconstruct(mc_fit_total_uncertainty, n_simulated_particles, mc_reconstruction_uncertainty);
+		uncertainty.getLowerAndUpperLimit(mc_spectrum_reconstructed, mc_reconstruction_uncertainty, mc_reconstruction_uncertainty_low, mc_reconstruction_uncertainty_up, true);
 
-		reconstructor.uncertainty(fit_total_uncertainty, response_matrix, n_simulated_particles, reconstruction_uncertainty);
-	}
+	} 
 
-		uncertainty.getLowerAndUpperLimit(spectrum_reconstructed, reconstruction_uncertainty, reconstruction_uncertainty_low, reconstruction_uncertainty_up, true);
+	// Uncertainty of single fit
+
+	uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+	fitter.fittedFEP(fit_params_uncertainty, response_matrix, fit_uncertainty);
+	uncertainties.push_back(&fit_uncertainty);
+	uncertainties.push_back(&fit_simulation_uncertainty);
+	uncertainties.push_back(&fit_spectrum_uncertainty);
+	uncertainty.getTotalUncertainty(uncertainties, fit_total_uncertainty);
+
+	reconstructor.uncertainty(fit_total_uncertainty, response_matrix, n_simulated_particles, reconstruction_uncertainty);
+
+	uncertainty.getLowerAndUpperLimit(spectrum_reconstructed, reconstruction_uncertainty, reconstruction_uncertainty_low, reconstruction_uncertainty_up, true);
 
 	/************ Plot results *************/
 
@@ -338,29 +365,26 @@ int main(int argc, char* argv[]){
 
 	/************ Write results to file *************/
 
+	// Open output file
 	cout << "> Writing output file " << arguments.outputfile << " ..." << endl;
 
 	stringstream outputfilename;
 	outputfilename << arguments.outputfile;
 
 	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
-	spectrum.Write();
-	if(arguments.use_mc && arguments.write_mc){
-		TDirectory *td_mc = outputfile.mkdir("monte_carlo");
-		td_mc->cd();
-		TDirectory *td_mc_spectra = td_mc->mkdir("spectra");
-		td_mc_spectra->cd();
-			for(auto s : mc_spectra)
-				s.Write();
-		TDirectory *td_mc_reconstructed_spectra = td_mc->mkdir("reconstructed_spectra");
-		td_mc_reconstructed_spectra->cd();
-			for(auto s : mc_fit_params)
-				s.Write();
-		outputfile.cd();
-	}
 
-    TDirectory *td_topdown = outputfile.mkdir("topdown");
-    td_topdown->cd();
+	// Write (rebinned) original spectrum
+	spectrum.Write();
+	spectrum_reconstructed.Write();
+	reconstruction_uncertainty.Write();
+	reconstruction_uncertainty_low.Write();
+	reconstruction_uncertainty_up.Write();
+	n_simulated_particles.Write();
+
+	// Write TopDown results
+	TDirectory *td_topdown = outputfile.mkdir("topdown");
+	td_topdown->cd();
+
 	topdown_params.Write();
 	topdown_FEP.Write();
 	topdown_fit.Write();
@@ -368,37 +392,59 @@ int main(int argc, char* argv[]){
 	topdown_spectrum_uncertainty.Write();
 	topdown_total_uncertainty.Write();
 	topdown_spectrum_reconstructed.Write();
-    outputfile.cd();
+	outputfile.cd();
 
-    TDirectory * td_fit = outputfile.mkdir("fit");
-    td_fit->cd();
-    	if(!arguments.use_mc){
-		fit_params.Write();
-	} else{
-		mc_fit_params_mean.Write();
-	}
+	// Write fit results
+	TDirectory * td_fit = outputfile.mkdir("fit");
+	td_fit->cd();
+
+	fit_params.Write();
+	fit_params_uncertainty.Write();
+	fit_simulation_uncertainty.Write();
+	fit_spectrum_uncertainty.Write();
+	fit_uncertainty.Write();
+	fit_total_uncertainty.Write();
+
 	fit_FEP.Write();
 	fit_result.Write();
-	// At the moment, it is not possible to obtain the spectrum uncertainty when using the MC method. Therefore, also fit_total_uncertainty is not useful.
-	if(!arguments.use_mc){
-		fit_simulation_uncertainty.Write();
-		fit_spectrum_uncertainty.Write();
-		fit_params_uncertainty.Write();
-		fit_uncertainty.Write();
-		fit_total_uncertainty.Write();
-	} else{
+	
+	// Write Monte-Carlo results (if Monte-Carlo uncertainty determination is activated)
+	if(arguments.use_mc){
+		TDirectory *td_mc = outputfile.mkdir("monte_carlo");
+		td_mc->cd();
+
+		mc_fit_params_mean.Write();
 		mc_fit_params_uncertainty.Write();
-		fit_uncertainty.Write();
-		fit_total_uncertainty.Write();
+		// Write fit_params_uncertainty again here to make clear where this estimate
+		// comes from.
+		fit_params_uncertainty.Write();
+		mc_fit_total_uncertainty.Write();
+
+		mc_fit_FEP.Write();
+		mc_fit_FEP_uncertainty.Write();
+		mc_FEP_uncertainty_low.Write();
+		mc_FEP_uncertainty_up.Write();
+
+		// Write Monte-Carlo sampled spectra (if the corresponding flag was set)
+		if(arguments.use_mc && arguments.write_mc){
+			TDirectory *td_mc_spectra = td_mc->mkdir("spectra");
+			td_mc_spectra->cd();
+				for(auto s : mc_spectra)
+					s.Write();
+			TDirectory *td_mc_fit_parameters = td_mc->mkdir("fit_parameters");
+			td_mc_fit_parameters->cd();
+				for(auto s : mc_fit_params_samples)
+					s.Write();
+			outputfile.cd();
+		}
+
+		outputfile.cd();
+
+		mc_spectrum_reconstructed.Write();
+		mc_reconstruction_uncertainty.Write();
+		mc_reconstruction_uncertainty_low.Write();
+		mc_reconstruction_uncertainty_up.Write();
 	}
-
-    	outputfile.cd();
-
-	n_simulated_particles.Write();
-	spectrum_reconstructed.Write();
-	reconstruction_uncertainty.Write();
-	reconstruction_uncertainty_low.Write();
-	reconstruction_uncertainty_up.Write();
 
 	outputfile.Close();
 
