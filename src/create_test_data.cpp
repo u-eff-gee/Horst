@@ -28,8 +28,8 @@ using std::endl;
 
 int main(int argc, char* argv[]){
 
-	if(argc == 1 || argc > 3){
-		cout << "Error: create_test_data.cpp: main(): Function takes exactly two arguments which define the models for the spectrum and the response function. Aborting ..." << endl;
+	if(argc == 1 || argc > 4){
+		cout << "Error: create_test_data.cpp: main(): Function takes exactly three arguments which define the models for the spectrum and the response function, and the name prefix of the output files. Aborting ..." << endl;
 		abort();
 	}
 
@@ -39,10 +39,10 @@ int main(int argc, char* argv[]){
 	
 	cout << "Creating test spectrum with option '" << argv[1] << "' ..." << endl;
 	SpectrumCreator spectrumCreator;
-	spectrumCreator.createSpectrum(spectrum, argv[1]);
+	spectrumCreator.createSpectrum(spectrum, argv[1], argv[3]);
 
 	cout << "Creating test reponse matrix with option '" << argv[2] << "' ..." << endl;
 	ResponseMatrixCreator responseMatrixCreator;
-	responseMatrixCreator.createResponseMatrix(response_matrix, n_simulated_particles, argv[2]);
+	responseMatrixCreator.createResponseMatrix(response_matrix, n_simulated_particles, argv[2], argv[3]);
 
 }

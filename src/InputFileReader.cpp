@@ -171,7 +171,7 @@ void InputFileReader::readROOTSpectrum(TH1F &spectrum, const TString spectrumfil
 
 	TH1F *spec= (TH1F*) gDirectory->Get(spectrumname);
 
-	for(Int_t i = 0; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+	for(Int_t i = 0; i <= (Int_t) NBINS; ++i){
 		spectrum.SetBinContent(i, spec->GetBinContent(i));
 	}
 }

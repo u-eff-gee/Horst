@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include "Math/DistFunc.h"
 #include "TF1.h"
@@ -9,10 +10,11 @@
 
 using std::cout;
 using std::endl;
+using std::stringstream;
 
 using ROOT::Math::normal_pdf;
 
-void SpectrumCreator::createSpectrum(TH1F &spectrum, const string option){
+void SpectrumCreator::createSpectrum(TH1F &spectrum, const string option, const string outputfile_prefix){
 	if(option == "bar"){
 		createBarSpectrum(spectrum, bar_params);
 	} else if(option == "normal"){
@@ -22,9 +24,11 @@ void SpectrumCreator::createSpectrum(TH1F &spectrum, const string option){
 		abort();
 	}
 
-	cout << "Writing test spectrum to 'test_spectrum.root' ..." << endl;
+	stringstream ofname;
+	ofname << outputfile_prefix << "_spectrum.root";
+	cout << "Writing test spectrum to '" << ofname.str() << "' ..." << endl;
 
-	TFile spectrumfile("test_spectrum.root", "RECREATE");
+	TFile spectrumfile(ofname.str().c_str(), "RECREATE");
 	spectrum.Write();
 	spectrumfile.Close();
 }

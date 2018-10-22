@@ -15,28 +15,25 @@
     along with Horst.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef SPECTRUMCREATOR_H
-#define SPECTRUMCREATOR_H 1
+#ifndef RESPONSEMATRIXCREATOR_H
+#define RESPONSEMATRIXCREATOR_H 1
 
 #include <string>
-#include <vector>
 
 #include "TH1.h"
 #include "TH2.h"
 
 using std::string;
-using std::vector;
 
-class SpectrumCreator{
+class ResponseMatrixCreator{
 	
 public:
-	SpectrumCreator(){}
-	~SpectrumCreator(){}
+	ResponseMatrixCreator(){}
+	~ResponseMatrixCreator(){}
 
-	void createSpectrum(TH1F &spectrum, const string option);
+	void createResponseMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const string option, const string outputfile_prefix);
 
-	void createBarSpectrum(TH1F &spectrum, const vector<Double_t> &params);
-	void createNormalSpectrum(TH1F &spectrum, const vector<Double_t> &params);
+	void createResponseMatrixWithEscapePeaks(TH2F &response_matrix, TH1F & n_simulated_particles, const vector<Double_t> params);
 };
 
 #endif

@@ -19,6 +19,10 @@ target_link_libraries(makematrix makematrix_lib)
 # convert_to_txt executable
 add_executable(convert_to_txt src/HistogramToTxt.cpp)
 
+# Test executable
+add_executable(create_test_data src/create_test_data.cpp)
+target_link_libraries(create_test_data test_lib)
+
 # Different compile options
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wconversion -Wsign-conversion")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -33,3 +37,16 @@ target_link_libraries(horst ${ROOT_LIBRARIES})
 target_link_libraries(tsroh ${ROOT_LIBRARIES})
 target_link_libraries(makematrix ${ROOT_LIBRARIES})
 target_link_libraries(convert_to_txt ${ROOT_LIBRARIES})
+target_link_libraries(create_test_data ${ROOT_LIBRARIES})
+
+# Installing
+install(TARGETS horst tsroh makematrix convert_to_txt DESTINATION bin)
+
+# Testing
+include(CTest)
+add_test(test_bar_escape create_test_data bar escape bar_escape)
+add_test(test_tsroh_bar_escape tsroh bar_escape_spectrum.root -m bar_escape_response_matrix.root -b 1 -t spectrum -o tsroh_bar_escape.root)
+add_test(test_horst_bar_escape horst tsroh_bar_escape.root -m bar_escape_response_matrix.root -b 10 -l 7800 -r 9300 -t response_spectrum -o horst_bar_escape.root)
+add_test(test_normal_escape create_test_data normal escape normal_escape)
+add_test(test_tsroh_normal_escape tsroh normal_escape_spectrum.root -m normal_escape_response_matrix.root -b 1 -t spectrum -o tsroh_normal_escape.root)
+add_test(test_horst_normal_escape horst tsroh_normal_escape.root -m normal_escape_response_matrix.root -b 10 -l 7400 -r 9700 -t response_spectrum -o horst_normal_escape.root)

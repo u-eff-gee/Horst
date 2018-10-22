@@ -137,13 +137,7 @@ int main(int argc, char* argv[]){
 	/************ Initialize histograms *************/
 
 	// Input
-	TH1F spectrum;
-
-	if(arguments.tfile){
-		spectrum = TH1F("spectrum", "Input Spectrum",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	} else {
-		spectrum = TH1F("spectrum", "Input Spectrum",  (Int_t) NBINS, 0., (Double_t) NBINS - 1);
-	}
+	TH1F spectrum = TH1F("spectrum", "Input Spectrum",  (Int_t) NBINS, 0., (Double_t) NBINS - 1);
 
 	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
@@ -191,12 +185,12 @@ int main(int argc, char* argv[]){
 	/************ Read and rebin spectrum and response matrix *************/
 
 	cout << "> Reading spectrum file " << arguments.spectrumfile << " ..." << endl;
-	if(arguments.tfile)
+	if(arguments.tfile){
 		inputFileReader.readROOTSpectrum(spectrum, arguments.spectrumfile, arguments.spectrumname);
-	else{
+	} else{
 		inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
-		spectrum.Rebin( (Int_t) arguments.binning);
 	}
+	spectrum.Rebin( (Int_t) arguments.binning);
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);

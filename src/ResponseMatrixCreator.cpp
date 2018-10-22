@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include "TFile.h"
 
@@ -7,8 +8,9 @@
 
 using std::cout;
 using std::endl;
+using std::stringstream;
 
-void ResponseMatrixCreator::createResponseMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const string option){
+void ResponseMatrixCreator::createResponseMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const string option, const string outputfile_prefix){
 	if(option == "escape"){
 		createResponseMatrixWithEscapePeaks(response_matrix, n_simulated_particles, escape_params);
 	} else{
@@ -16,9 +18,11 @@ void ResponseMatrixCreator::createResponseMatrix(TH2F &response_matrix, TH1F &n_
 		abort();
 	}
 
-	cout << "Writing test response_matrix to 'test_response_matrix.root' ..." << endl;
+	stringstream ofname;
+	ofname << outputfile_prefix << "_response_matrix.root";
+	cout << "Writing test response_matrix to '" << ofname.str() << "' ..." << endl;
 
-	TFile response_matrixfile("test_response_matrix.root", "RECREATE");
+	TFile response_matrixfile(ofname.str().c_str(), "RECREATE");
 	n_simulated_particles.Write();
 	response_matrix.Write();
 	response_matrixfile.Close();
@@ -51,5 +55,4 @@ void ResponseMatrixCreator::createResponseMatrixWithEscapePeaks(TH2F &response_m
 			}
 		}
 	}
-
 }
