@@ -47,6 +47,15 @@ include(CTest)
 add_test(test_bar_escape create_test_data bar escape bar_escape)
 add_test(test_tsroh_bar_escape tsroh bar_escape_spectrum.root -m bar_escape_response_matrix.root -b 1 -t spectrum -o tsroh_bar_escape.root)
 add_test(test_horst_bar_escape horst tsroh_bar_escape.root -m bar_escape_response_matrix.root -b 10 -l 7800 -r 9300 -t response_spectrum -o horst_bar_escape.root)
+
 add_test(test_normal_escape create_test_data normal escape normal_escape)
 add_test(test_tsroh_normal_escape tsroh normal_escape_spectrum.root -m normal_escape_response_matrix.root -b 1 -t spectrum -o tsroh_normal_escape.root)
 add_test(test_horst_normal_escape horst tsroh_normal_escape.root -m normal_escape_response_matrix.root -b 10 -l 7400 -r 9700 -t response_spectrum -o horst_normal_escape.root)
+
+add_test(test_bar_efficiency create_test_data bar efficiency bar_efficiency)
+add_test(test_tsroh_bar_efficiency tsroh bar_efficiency_spectrum.root -m bar_efficiency_response_matrix.root -b 1 -t spectrum -o tsroh_bar_efficiency.root)
+add_test(test_horst_bar_efficiency horst tsroh_bar_efficiency.root -m bar_efficiency_response_matrix.root -b 10 -l 7800 -r 9300 -t response_spectrum -o horst_bar_efficiency.root)
+
+add_test(test_normal_efficiency create_test_data normal efficiency normal_efficiency)
+add_test(test_tsroh_normal_efficiency tsroh normal_efficiency_spectrum.root -m normal_efficiency_response_matrix.root -b 1 -t spectrum -o tsroh_normal_efficiency.root)
+add_test(test_horst_normal_efficiency horst tsroh_normal_efficiency.root -m normal_efficiency_response_matrix.root -b 10 -l 7400 -r 9700 -t response_spectrum -o horst_normal_efficiency.root)

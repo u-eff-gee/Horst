@@ -13,7 +13,10 @@ using std::stringstream;
 void ResponseMatrixCreator::createResponseMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const string option, const string outputfile_prefix){
 	if(option == "escape"){
 		createResponseMatrixWithEscapePeaks(response_matrix, n_simulated_particles, escape_params);
-	} else{
+	} 
+	else if(option == "efficiency"){
+		createResponseMatrixWithEfficiency(response_matrix, n_simulated_particles, efficiency_params);
+	}else{
 		cout << "Error: ResponseMatrixCreator.cpp: createResponseMatrix(): Unknown option '" << option << "'. Aborting ..." << endl;
 		abort();
 	}
@@ -50,6 +53,35 @@ void ResponseMatrixCreator::createResponseMatrixWithEscapePeaks(TH2F &response_m
 		for(Int_t j = 1; j <= i; ++j){
 			if(j <= i){
 				response_matrix.SetBinContent(i, j, response_spectrum.GetBinContent(NBINS - i + j));
+			} else{
+				response_matrix.SetBinContent(i, j, 0.);
+			}
+		}
+	}
+}
+
+void ResponseMatrixCreator::createResponseMatrixWithEfficiency(TH2F &response_matrix, TH1F &n_simulated_particles, vector<Double_t> params){
+	// Fill n_simulated_particles
+	for(Int_t i = 1; i <= NBINS; ++i)
+		n_simulated_particles.SetBinContent(i, params[0]);
+
+	Double_t inverse_NBINS = 1./ ((Double_t) NBINS);
+	// Simple and unrealistic model for the efficiency epsilon:
+	//
+	//              | 1, if i even
+	// epsilon(E) = | 
+	//              | (E_0 - E)/E_0, else
+	//
+	// where E_0 is the maximum energy in the spectrum. I.e. the efficiency varies from
+	// epsilon = 1 at the left edge of the spectrum to epsilon = 0 at the right edge.
+	for(Int_t i = 1; i <= NBINS; ++i){
+		for(Int_t j = 1; j <= i; ++j){
+			if(j == i){
+				if(j < params[1]){
+					response_matrix.SetBinContent(i, j, params[0]*params[2]);
+				} else{
+					response_matrix.SetBinContent(i, j, params[0]*params[3]);
+				}
 			} else{
 				response_matrix.SetBinContent(i, j, 0.);
 			}

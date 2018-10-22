@@ -34,6 +34,8 @@ public:
 	void createResponseMatrix(TH2F &response_matrix, TH1F &n_simulated_particles, const string option, const string outputfile_prefix);
 
 	void createResponseMatrixWithEscapePeaks(TH2F &response_matrix, TH1F & n_simulated_particles, const vector<Double_t> params);
+
+	void createResponseMatrixWithEfficiency(TH2F &response_matrix, TH1F &n_simulated_particles, vector<Double_t> params);
 };
 
 #endif
