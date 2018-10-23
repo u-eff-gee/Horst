@@ -56,7 +56,7 @@ void MonteCarloUncertainty::apply_fluctuations(TH1F &modified_spectrum, const TH
 	// To simulate the influence of counting statistics on the measured spectrum, assume that the actually measured value of a bin is the mean value lambda of the Poissonian distribution, and sample a new value from it.
 	// 
 	// Instead of sampling from a discrete Poissonian distribution, which is the 'true' distribution for a counting experiment, random numbers can also be obtained from a continuous normal distribution, because for large numbers of events per bin (N >~ 10), the Poissonian distribution converges to a normal distribution with mean value lambda and variance lambda.
-	// Since the normal distribution is defined over the whole range of real numbers, one needs to make sure that only positive numbers are return.
+	// Since the normal distribution is defined over the whole range of real numbers, one needs to make sure that only positive numbers are returned.
 	// The Poissonian distribution does this by default.
 	// In the history of 'horst', the normal distribution was used first.
 	// However, it was decided to switch to the more general Poissonian distribution.

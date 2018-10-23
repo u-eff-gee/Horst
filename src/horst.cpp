@@ -138,34 +138,36 @@ int main(int argc, char* argv[]){
 	Fitter fitter(arguments.binning);
 	Reconstructor reconstructor(arguments.binning);
 	MonteCarloUncertainty monteCarloUncertainty(arguments.binning, arguments.seed);
+	Uncertainty uncertainty(arguments.binning);
 
 	/************ Initialize histograms *************/
 
 	// Input
 	TH1F spectrum = TH1F("spectrum", "Input Spectrum",  (Int_t) NBINS, 0., max_bin);
-
 	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., max_bin);
 	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., max_bin);
 
 	// TopDown algorithm
 
 	TH1F topdown_params("topdown_params", "TopDown Parameters", nbins, 0., max_bin);
-	TH1F topdown_FEP("topdown_FEP", "TopDown FEP", nbins, 0., max_bin); 
 	TH1F topdown_fit("topdown_fit", "TopDown Fit",  nbins, 0., max_bin); 
-	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed", nbins, 0., max_bin); 
 	TH1F topdown_simulation_uncertainty("topdown_simulation_uncertainty", "TopDown Simulation Uncertainty", nbins, 0., max_bin); 
 	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty", nbins, 0., max_bin); 
 	TH1F topdown_total_uncertainty("topdown_total_uncertainty", "TopDown Total Uncertainty", nbins, 0., max_bin);
+	TH1F topdown_FEP("topdown_FEP", "TopDown FEP", nbins, 0., max_bin); 
+	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed", nbins, 0., max_bin); 
 
 	// Fit
 	TH1F fit_params("fit_params", "Fit Parameters", nbins, 0., max_bin);
-	TH1F fit_params_uncertainty("fit_params_uncertainty", "Fit Parameters Uncertainty", nbins, 0., max_bin);
-	TH1F fit_uncertainty("fit_uncertainty", "Fit Uncertainty", nbins, 0., max_bin);
-	TH1F fit_FEP("fit_FEP", "Fit FEP", nbins, 0., max_bin); 
 	TH1F fit_result("fit_result", "Fit Result", nbins, 0., max_bin); 
+	TH1F fit_algorithm_uncertainty("fit_algorithm_uncertainty", "Fit Algorithm Uncertainty", nbins, 0., max_bin);
+	TH1F fit_algorithm_FEP_uncertainty("fit_algorithm_FEP_uncertainty", "Fit Algorithm FEP Uncertainty", nbins, 0., max_bin);
+	TH1F fit_algorithm_reconstruction_uncertainty("fit_algorithm_reconstruction_uncertainty", "Fit Algorithm Reconstruction Uncertainty", nbins, 0., max_bin);
 	TH1F fit_simulation_uncertainty("fit_simulation_uncertainty", "Fit Simulation Uncertainty", nbins, 0., max_bin);
 	TH1F fit_spectrum_uncertainty("fit_spectrum_uncertainty", "Spectrum Uncertainty", nbins, 0., max_bin);
 	TH1F fit_total_uncertainty("fit_total_uncertainty", "Total Uncertainty", nbins, 0., max_bin);
+
+	TH1F fit_FEP("fit_FEP", "Fit FEP", nbins, 0., max_bin); 
 
 	TH1F spectrum_reconstructed("spectrum_reconstructed", "Reconstructed Spectrum", nbins, 0., max_bin); 
 	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", nbins, 0., max_bin);
@@ -175,6 +177,9 @@ int main(int argc, char* argv[]){
 	// Monte-Carlo Uncertainty
 	vector<TH1F> mc_spectra;
 	vector<TH1F> mc_fit_params_samples;
+	vector<TH1F> mc_FEP_samples;
+	vector<TH1F> mc_reconstruction_samples;
+
 	TH2F mc_matrix;
 	TH1F mc_fit_params, mc_fit_params_mean, mc_fit_params_uncertainty, mc_fit_total_uncertainty;
 	TH1F mc_fit_FEP, mc_fit_FEP_uncertainty;
@@ -215,7 +220,6 @@ int main(int argc, char* argv[]){
 
 	reconstructor.reconstruct(topdown_params, n_simulated_particles, topdown_spectrum_reconstructed);
 
-	Uncertainty uncertainty(arguments.binning);
 	uncertainty.getUncertainty(topdown_params, spectrum, response_matrix, topdown_simulation_uncertainty, topdown_spectrum_uncertainty, binstart, binstop);
 
 	vector<TH1F*> topdown_uncertainties(2);
@@ -229,7 +233,7 @@ int main(int argc, char* argv[]){
 
 	cout << "> Fit spectrum using TopDown parameters as start parameters ..." << endl;
 
-	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_params_uncertainty, binstart, binstop, arguments.verbose, arguments.correlation, correlation_matrix);
+	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_algorithm_uncertainty, binstart, binstop, arguments.verbose, arguments.correlation, correlation_matrix);
 
 	fitter.print_fitresult();
 
@@ -251,6 +255,14 @@ int main(int argc, char* argv[]){
 		for(UInt_t i = 0; i < arguments.uncertainty_mc; ++i){
 			histname << "mc_spectrum_" << i;
 			mc_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), nbins,  0., max_bin));
+			histname.str("");
+			histname << "mc_FEP_" << i;
+			mc_FEP_samples.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin));
+
+			histname.str("");
+			histname << "mc_reconstructed_spectrum_" << i;
+			mc_reconstruction_samples.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin));
+
 			monteCarloUncertainty.apply_fluctuations(mc_spectra[i], spectrum, nbins, binstop);
 
 			if(arguments.use_mc_fast){
@@ -263,6 +275,8 @@ int main(int argc, char* argv[]){
 			histname.str("");
 			histname << "mc_fit_params_" << i;
 			mc_fit_params_samples.push_back(mc_fit_params);
+			reconstructor.reconstruct(mc_fit_params, n_simulated_particles, mc_reconstruction_samples[i]);
+			fitter.fittedFEP(mc_fit_params, response_matrix, mc_FEP_samples[i]);
 			histname.str("");
 
 			if(i % MC_UPDATE_INTERVAL == 0 && i > 0)
@@ -297,7 +311,7 @@ int main(int argc, char* argv[]){
 
 		// Use the fit uncertainty from a single fit as an estimate for the uncertainty
 		// of the fitting algorithm
-		uncertainties.push_back(&fit_params_uncertainty);
+		uncertainties.push_back(&fit_algorithm_uncertainty);
 		uncertainties.push_back(&mc_fit_params_uncertainty);
 		uncertainty.getTotalUncertainty(uncertainties, mc_fit_total_uncertainty);
 
@@ -309,13 +323,13 @@ int main(int argc, char* argv[]){
 		reconstructor.reconstruct(mc_fit_total_uncertainty, n_simulated_particles, mc_reconstruction_uncertainty);
 		uncertainty.getLowerAndUpperLimit(mc_spectrum_reconstructed, mc_reconstruction_uncertainty, mc_reconstruction_uncertainty_low, mc_reconstruction_uncertainty_up, true);
 
-	} 
+	}
 
 	// Uncertainty of single fit
 
 	uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, binstart, binstop);
-	fitter.fittedFEP(fit_params_uncertainty, response_matrix, fit_uncertainty);
-	uncertainties.push_back(&fit_uncertainty);
+	fitter.fittedFEP(fit_algorithm_uncertainty, response_matrix, fit_algorithm_FEP_uncertainty);
+	uncertainties.push_back(&fit_algorithm_FEP_uncertainty);
 	uncertainties.push_back(&fit_simulation_uncertainty);
 	uncertainties.push_back(&fit_spectrum_uncertainty);
 	uncertainty.getTotalUncertainty(uncertainties, fit_total_uncertainty);
@@ -404,10 +418,11 @@ int main(int argc, char* argv[]){
 	td_fit->cd();
 
 	fit_params.Write();
-	fit_params_uncertainty.Write();
+	fit_algorithm_uncertainty.Write();
+	fit_algorithm_FEP_uncertainty.Write();
+	fit_algorithm_reconstruction_uncertainty.Write();
 	fit_simulation_uncertainty.Write();
 	fit_spectrum_uncertainty.Write();
-	fit_uncertainty.Write();
 	fit_total_uncertainty.Write();
 
 	fit_FEP.Write();
@@ -420,9 +435,9 @@ int main(int argc, char* argv[]){
 
 		mc_fit_params_mean.Write();
 		mc_fit_params_uncertainty.Write();
-		// Write fit_params_uncertainty again here to make clear where this estimate
-		// comes from.
-		fit_params_uncertainty.Write();
+		fit_algorithm_uncertainty.Write();
+		fitter.fittedFEP(fit_algorithm_uncertainty, response_matrix, fit_algorithm_FEP_uncertainty);
+		reconstructor.reconstruct(fit_algorithm_uncertainty, n_simulated_particles, fit_algorithm_reconstruction_uncertainty);
 		mc_fit_total_uncertainty.Write();
 
 		mc_fit_FEP.Write();
@@ -439,6 +454,16 @@ int main(int argc, char* argv[]){
 			TDirectory *td_mc_fit_parameters = td_mc->mkdir("fit_parameters");
 			td_mc_fit_parameters->cd();
 				for(auto s : mc_fit_params_samples)
+					s.Write();
+			outputfile.cd();
+			TDirectory *td_mc_FEP = td_mc->mkdir("fep");
+			td_mc_FEP->cd();
+				for(auto s : mc_FEP_samples)
+					s.Write();
+			outputfile.cd();
+			TDirectory *td_mc_reconstructed = td_mc->mkdir("reconstructed");
+			td_mc_reconstructed->cd();
+				for(auto s : mc_reconstruction_samples)
 					s.Write();
 			outputfile.cd();
 		}
