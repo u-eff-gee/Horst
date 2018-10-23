@@ -72,8 +72,8 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 		best_simulation = 0;
 
 		for(Int_t j = 0; j < n_energies; ++j){
-			dist = energies[(long unsigned int) j] - (Double_t) i;	
-			if(fabs(dist) < fabs(min_dist)){
+			dist = fabs(energies[(long unsigned int) j] - (Double_t) i);
+			if(dist < min_dist){
 				min_dist = dist;
 				best_simulation = j;
 			}
@@ -103,6 +103,81 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 		n_simulated_particles.SetBinContent(i, n_particles[(long unsigned int) best_simulation]);
 
 		inputFile->Close();
+	}
+}
+
+void InputFileReader::updateMatrix(const vector<TString> &old_filenames, const vector<Double_t> &old_energies, const vector<Double_t> &old_n_particles, const TH2F &old_response_matrix, const vector<TString> &new_filenames, const vector<Double_t> &new_energies, const vector<Double_t> &new_n_particles, const TString histname, TH2F &response_matrix, TH1F &n_simulated_particles){
+	cout << "> Updating matrix ..." << endl;
+
+	Double_t min_dist_old = (Double_t) NBINS;
+	Double_t min_dist_new = (Double_t) NBINS;
+	Double_t dist_old;
+	Double_t dist_new;
+	Int_t best_simulation_old = 0;
+	Int_t best_simulation_new = 0;
+	Int_t n_energies_old = (Int_t) old_energies.size();
+	Int_t n_energies_new = (Int_t) new_energies.size();
+	Int_t simulation_shift = 0;
+
+	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
+		// Find best simulation for energy bin
+		min_dist_old = (Double_t) NBINS;
+		min_dist_new = (Double_t) NBINS;
+		best_simulation_old = 0;
+		best_simulation_new = 0;
+
+		for(Int_t j = 0; j < n_energies_old; ++j){
+			dist_old = fabs(old_energies[(long unsigned int) j] - (Double_t) i);	
+			if(dist_old < min_dist_old){
+				min_dist_old = dist_old;
+				best_simulation_old = j;
+			}
+		}
+
+		for(Int_t j = 0; j < n_energies_new; ++j){
+			dist_new = fabs(new_energies[(long unsigned int) j] - (Double_t) i);
+			if(dist_new < fabs(min_dist_new)){
+				min_dist_new = dist_new;
+				best_simulation_new = j;
+			}
+		}
+
+		if(min_dist_new < min_dist_old){
+			cout << "Bin: " << i << " keV, using new simulation " << new_filenames[(long unsigned int) best_simulation_new] << " ( " << new_energies[(long unsigned int) best_simulation_new] << " )" << endl;
+			//
+			// Fill row of matrix with best simulation
+			TFile *inputFile = new TFile(new_filenames[(long unsigned int) best_simulation_new]);
+			TH1F *hist = nullptr;
+
+			if(gDirectory->FindKey(histname)){
+				hist = (TH1F*) gDirectory->Get(histname);
+			} else{
+				cout << __FILE__ << ":" << __FUNCTION__ << "():" << __LINE__ << ": Error: No TH1F object called '" << histname << "' found in '" << new_filenames[(long unsigned int) best_simulation_new] << "'. Aborting ..." << endl; 
+				abort();
+			}
+
+			simulation_shift = (Int_t) min_dist_new;	
+			for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
+				if(j + simulation_shift < (Int_t) NBINS && (j + simulation_shift) >= 0){
+					response_matrix.SetBinContent(i, j, hist->GetBinContent(j + simulation_shift));
+				}
+			}
+
+			// Fill number of simulated particles into TH1F
+			n_simulated_particles.SetBinContent(i, new_n_particles[(long unsigned int) best_simulation_new]);
+
+			inputFile->Close();
+
+		} else{
+			cout << "Bin: " << i << " keV, keep old simulation ( " << old_energies[(long unsigned int) best_simulation_old] << " )" << endl;
+
+			n_simulated_particles.SetBinContent(i, old_n_particles[best_simulation_old]);
+			for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
+				if(j + simulation_shift < (Int_t) NBINS && (j + simulation_shift) >= 0){
+					response_matrix.SetBinContent(i, j, old_response_matrix.GetBinContent(i, j));
+				}
+			}
+		}
 	}
 }
 
@@ -144,6 +219,27 @@ void InputFileReader::readMatrix(TH2F &response_matrix, TH1F &n_simulated_partic
 	}
 	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
 		n_simulated_particles.SetBinContent(i, n_particles->GetBinContent(i));
+	}
+
+	inputFile->Close();
+}
+
+void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile){
+
+	TFile *inputFile = new TFile(matrixfile); 
+	TH2F *rema = nullptr;
+
+	if(gDirectory->FindKey("rema")){
+		rema = (TH2F*) gDirectory->Get("rema");
+	} else{
+		cout << __FILE__ << ":" << __FUNCTION__ << "():" << __LINE__ << ": Error: No TH2F object called 'rema' found in '" << matrixfile << "'. Aborting ..." << endl;
+		abort();
+	}
+
+	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
+		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
+			response_matrix.SetBinContent(i, j, rema->GetBinContent(i, j));
+		}
 	}
 
 	inputFile->Close();

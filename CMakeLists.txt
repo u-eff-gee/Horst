@@ -25,7 +25,7 @@ target_link_libraries(create_test_data test_lib)
 
 # Different compile options
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wconversion -Wsign-conversion")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3") # -ftree_vectorize and -march=native had no effect
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # ROOT libraries
@@ -59,4 +59,4 @@ add_test(test_horst_bar_efficiency horst tsroh_bar_efficiency.root -m bar_effici
 add_test(test_normal_efficiency create_test_data normal efficiency normal_efficiency)
 add_test(test_tsroh_normal_efficiency tsroh normal_efficiency_spectrum.root -m normal_efficiency_response_matrix.root -b 1 -t spectrum -o tsroh_normal_efficiency.root)
 add_test(test_horst_normal_efficiency horst tsroh_normal_efficiency.root -m normal_efficiency_response_matrix.root -b 10 -l 7400 -r 9700 -t response_spectrum -o horst_normal_efficiency.root)
-add_test(test_horst_normal_efficiency_mc horst tsroh_normal_efficiency.root -m normal_efficiency_response_matrix.root -b 10 -l 7400 -r 9700 -t response_spectrum -o horst_normal_efficiency_mc.root -u 10)
+#add_test(test_horst_normal_efficiency_mc horst tsroh_normal_efficiency.root -m normal_efficiency_response_matrix.root -b 10 -l 7400 -r 9700 -t response_spectrum -o horst_normal_efficiency_mc.root -u 10)
