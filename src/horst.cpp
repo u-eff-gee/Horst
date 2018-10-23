@@ -128,8 +128,13 @@ int main(int argc, char* argv[]){
 
 	/************ Initialize auxiliary classes *************/
 
+	const Int_t nbins = (Int_t) NBINS / (Int_t) arguments.binning;
+	const Double_t max_bin = (Double_t) NBINS - 1.;
+	const Int_t binstart = (Int_t) arguments.left / (Int_t) arguments.binning; 
+	const Int_t binstop = (Int_t) arguments.right / (Int_t) arguments.binning; 
+
 	InputFileReader inputFileReader(arguments.binning);
-	TMatrixDSym correlation_matrix((Int_t) NBINS / (Int_t) arguments.binning);
+	TMatrixDSym correlation_matrix(nbins);
 	Fitter fitter(arguments.binning);
 	Reconstructor reconstructor(arguments.binning);
 	MonteCarloUncertainty monteCarloUncertainty(arguments.binning, arguments.seed);
@@ -137,35 +142,35 @@ int main(int argc, char* argv[]){
 	/************ Initialize histograms *************/
 
 	// Input
-	TH1F spectrum = TH1F("spectrum", "Input Spectrum",  (Int_t) NBINS, 0., (Double_t) NBINS - 1);
+	TH1F spectrum = TH1F("spectrum", "Input Spectrum",  (Int_t) NBINS, 0., max_bin);
 
-	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
-	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
+	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., max_bin);
+	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., max_bin);
 
 	// TopDown algorithm
 
-	TH1F topdown_params("topdown_params", "TopDown Parameters",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F topdown_FEP("topdown_FEP", "TopDown FEP",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_fit("topdown_fit", "TopDown Fit",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_simulation_uncertainty("topdown_simulation_uncertainty", "TopDown Simulation Uncertainty",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F topdown_total_uncertainty("topdown_total_uncertainty", "TopDown Total Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F topdown_params("topdown_params", "TopDown Parameters", nbins, 0., max_bin);
+	TH1F topdown_FEP("topdown_FEP", "TopDown FEP", nbins, 0., max_bin); 
+	TH1F topdown_fit("topdown_fit", "TopDown Fit",  nbins, 0., max_bin); 
+	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed", nbins, 0., max_bin); 
+	TH1F topdown_simulation_uncertainty("topdown_simulation_uncertainty", "TopDown Simulation Uncertainty", nbins, 0., max_bin); 
+	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty", nbins, 0., max_bin); 
+	TH1F topdown_total_uncertainty("topdown_total_uncertainty", "TopDown Total Uncertainty", nbins, 0., max_bin);
 
 	// Fit
-	TH1F fit_params("fit_params", "Fit Parameters",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F fit_params_uncertainty("fit_params_uncertainty", "Fit Parameters Uncertainty",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F fit_uncertainty("fit_uncertainty", "Fit Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F fit_FEP("fit_FEP", "Fit FEP",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F fit_result("fit_result", "Fit Result",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F fit_simulation_uncertainty("fit_simulation_uncertainty", "Fit Simulation Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F fit_spectrum_uncertainty("fit_spectrum_uncertainty", "Spectrum Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F fit_total_uncertainty("fit_total_uncertainty", "Total Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F fit_params("fit_params", "Fit Parameters", nbins, 0., max_bin);
+	TH1F fit_params_uncertainty("fit_params_uncertainty", "Fit Parameters Uncertainty", nbins, 0., max_bin);
+	TH1F fit_uncertainty("fit_uncertainty", "Fit Uncertainty", nbins, 0., max_bin);
+	TH1F fit_FEP("fit_FEP", "Fit FEP", nbins, 0., max_bin); 
+	TH1F fit_result("fit_result", "Fit Result", nbins, 0., max_bin); 
+	TH1F fit_simulation_uncertainty("fit_simulation_uncertainty", "Fit Simulation Uncertainty", nbins, 0., max_bin);
+	TH1F fit_spectrum_uncertainty("fit_spectrum_uncertainty", "Spectrum Uncertainty", nbins, 0., max_bin);
+	TH1F fit_total_uncertainty("fit_total_uncertainty", "Total Uncertainty", nbins, 0., max_bin);
 
-	TH1F spectrum_reconstructed("spectrum_reconstructed", "Reconstructed Spectrum",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
-	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F reconstruction_uncertainty_low("reconstruction_uncertainty_low", "Reconstruction Uncertainty lower Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	TH1F reconstruction_uncertainty_up("reconstruction_uncertainty_up", "Reconstruction Uncertainty upper Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+	TH1F spectrum_reconstructed("spectrum_reconstructed", "Reconstructed Spectrum", nbins, 0., max_bin); 
+	TH1F reconstruction_uncertainty("reconstruction_uncertainty", "Reconstruction Uncertainty", nbins, 0., max_bin);
+	TH1F reconstruction_uncertainty_low("reconstruction_uncertainty_low", "Reconstruction Uncertainty lower Limit", nbins, 0., max_bin);
+	TH1F reconstruction_uncertainty_up("reconstruction_uncertainty_up", "Reconstruction Uncertainty upper Limit", nbins, 0., max_bin);
 
 	// Monte-Carlo Uncertainty
 	vector<TH1F> mc_spectra;
@@ -203,7 +208,7 @@ int main(int argc, char* argv[]){
 	/************ Use Top-Down unfolding to get start parameters *************/
 
 	cout << "> Unfold spectrum using top-down algorithm ..." << endl;
-	fitter.topdown(spectrum, response_matrix, topdown_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+	fitter.topdown(spectrum, response_matrix, topdown_params, binstart, binstop);
 
 	fitter.fittedFEP(topdown_params, response_matrix, topdown_FEP);
 	fitter.fittedSpectrum(topdown_params, response_matrix, topdown_fit);
@@ -211,7 +216,7 @@ int main(int argc, char* argv[]){
 	reconstructor.reconstruct(topdown_params, n_simulated_particles, topdown_spectrum_reconstructed);
 
 	Uncertainty uncertainty(arguments.binning);
-	uncertainty.getUncertainty(topdown_params, spectrum, response_matrix, topdown_simulation_uncertainty, topdown_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+	uncertainty.getUncertainty(topdown_params, spectrum, response_matrix, topdown_simulation_uncertainty, topdown_spectrum_uncertainty, binstart, binstop);
 
 	vector<TH1F*> topdown_uncertainties(2);
 	topdown_uncertainties[0] = &topdown_simulation_uncertainty;
@@ -224,7 +229,7 @@ int main(int argc, char* argv[]){
 
 	cout << "> Fit spectrum using TopDown parameters as start parameters ..." << endl;
 
-	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_params_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning, arguments.verbose, arguments.correlation, correlation_matrix);
+	fitter.fit(spectrum, response_matrix, topdown_params, fit_params, fit_params_uncertainty, binstart, binstop, arguments.verbose, arguments.correlation, correlation_matrix);
 
 	fitter.print_fitresult();
 
@@ -238,21 +243,21 @@ int main(int argc, char* argv[]){
 
 		stringstream histname("");
 		if(!arguments.use_mc_fast){
-			mc_matrix = TH2F("modified_response_matrix", "MC ResponseMatrix", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) (NBINS - 1), (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) (NBINS - 1));
+			mc_matrix = TH2F("modified_response_matrix", "MC ResponseMatrix", nbins, 0., max_bin, nbins, 0., max_bin);
 		}
 
-		mc_fit_params = TH1F ("mc_fit_params", "MC Fit Parameters",  (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_fit_params = TH1F ("mc_fit_params", "MC Fit Parameters", nbins, 0., max_bin);
 
 		for(UInt_t i = 0; i < arguments.uncertainty_mc; ++i){
 			histname << "mc_spectrum_" << i;
-			mc_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), (Int_t) NBINS/ (Int_t) arguments.binning,  0., (Double_t) NBINS - 1));
-			monteCarloUncertainty.apply_fluctuations(mc_spectra[i], spectrum, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+			mc_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), nbins,  0., max_bin));
+			monteCarloUncertainty.apply_fluctuations(mc_spectra[i], spectrum, nbins, binstop);
 
 			if(arguments.use_mc_fast){
-				fitter.fit(mc_spectra[i], response_matrix, fit_params, mc_fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+				fitter.fit(mc_spectra[i], response_matrix, fit_params, mc_fit_params, binstart, binstop);
 			} else{
-				monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
-				fitter.fit(mc_spectra[i], mc_matrix, fit_params, mc_fit_params, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+				monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, binstart, binstop);
+				fitter.fit(mc_spectra[i], mc_matrix, fit_params, mc_fit_params, binstart, binstop);
 			}
 
 			histname.str("");
@@ -274,21 +279,21 @@ int main(int argc, char* argv[]){
 
 		cout << "> Evaluating Monte-Carlo results ..." << endl;
 
-		mc_fit_params_mean = TH1F("mc_fit_params_mean", "MC Fit Parameters", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_fit_params_uncertainty = TH1F("mc_fit_params_uncertainty", "MC Fit Parameters Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_fit_total_uncertainty = TH1F("mc_fit_total_uncertainty", "MC Fit Total Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_fit_params_mean = TH1F("mc_fit_params_mean", "MC Fit Parameters", nbins, 0., max_bin);
+		mc_fit_params_uncertainty = TH1F("mc_fit_params_uncertainty", "MC Fit Parameters Uncertainty", nbins, 0., max_bin);
+		mc_fit_total_uncertainty = TH1F("mc_fit_total_uncertainty", "MC Fit Total Uncertainty", nbins, 0., max_bin);
 
-		mc_fit_FEP = TH1F("mc_fit_FEP", "MC Fit FEP", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_fit_FEP_uncertainty = TH1F("mc_fit_FEP_uncertainty", "MC Fit FEP Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_FEP_uncertainty_low = TH1F("mc_FEP_uncertainty_low", "MC Fit FEP Uncertainty lower Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_FEP_uncertainty_up = TH1F("mc_FEP_uncertainty_up", "MC Fit FEP Uncertainty upper Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_fit_FEP = TH1F("mc_fit_FEP", "MC Fit FEP", nbins, 0., max_bin);
+		mc_fit_FEP_uncertainty = TH1F("mc_fit_FEP_uncertainty", "MC Fit FEP Uncertainty", nbins, 0., max_bin);
+		mc_FEP_uncertainty_low = TH1F("mc_FEP_uncertainty_low", "MC Fit FEP Uncertainty lower Limit", nbins, 0., max_bin);
+		mc_FEP_uncertainty_up = TH1F("mc_FEP_uncertainty_up", "MC Fit FEP Uncertainty upper Limit", nbins, 0., max_bin);
 
-		mc_spectrum_reconstructed = TH1F("mc_spectrum_reconstructed", "MC Reconstructed Spectrum", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_reconstruction_uncertainty = TH1F("mc_reconstruction_uncertainty", "MC Reconstruction Uncertainty", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_reconstruction_uncertainty_low = TH1F("mc_reconstruction_uncertainty_low", "MC Reconstruction Uncertainty lower Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-		mc_reconstruction_uncertainty_up = TH1F("mc_reconstruction_uncertainty_up", "MC Reconstruction Uncertainty upper Limit", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
+		mc_spectrum_reconstructed = TH1F("mc_spectrum_reconstructed", "MC Reconstructed Spectrum", nbins, 0., max_bin);
+		mc_reconstruction_uncertainty = TH1F("mc_reconstruction_uncertainty", "MC Reconstruction Uncertainty", nbins, 0., max_bin);
+		mc_reconstruction_uncertainty_low = TH1F("mc_reconstruction_uncertainty_low", "MC Reconstruction Uncertainty lower Limit", nbins, 0., max_bin);
+		mc_reconstruction_uncertainty_up = TH1F("mc_reconstruction_uncertainty_up", "MC Reconstruction Uncertainty upper Limit", nbins, 0., max_bin);
 
-		monteCarloUncertainty.evaluateMeanAndStd(mc_fit_params_mean, mc_fit_params_uncertainty, mc_fit_params_samples, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+		monteCarloUncertainty.evaluateMeanAndStd(mc_fit_params_mean, mc_fit_params_uncertainty, mc_fit_params_samples, binstart, binstop);
 
 		// Use the fit uncertainty from a single fit as an estimate for the uncertainty
 		// of the fitting algorithm
@@ -308,7 +313,7 @@ int main(int argc, char* argv[]){
 
 	// Uncertainty of single fit
 
-	uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, (Int_t) arguments.left/ (Int_t) arguments.binning, (Int_t) arguments.right/ (Int_t) arguments.binning);
+	uncertainty.getUncertainty(fit_params, spectrum, response_matrix, fit_simulation_uncertainty, fit_spectrum_uncertainty, binstart, binstop);
 	fitter.fittedFEP(fit_params_uncertainty, response_matrix, fit_uncertainty);
 	uncertainties.push_back(&fit_uncertainty);
 	uncertainties.push_back(&fit_simulation_uncertainty);

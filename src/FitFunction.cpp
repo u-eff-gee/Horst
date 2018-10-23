@@ -19,7 +19,7 @@
 #include "Config.h"
 
 Double_t FitFunction::operator()(Double_t *x, Double_t *p){
-	Int_t bin = (Int_t) round(x[0]/(Double_t) BINNING);
+	Int_t bin = (Int_t) round(x[0]*inverse_BINNING);
 	Double_t bin_content = 0.;
 
 	for(Int_t i = bin_stop; i >= bin; --i){

@@ -25,6 +25,7 @@ class FitFunction{
 		FitFunction(const TH2F &rema, const UInt_t binning, Int_t binstart, Int_t binstop): 
 			response_matrix(rema),
 			BINNING(binning),
+			inverse_BINNING(1./binning),
 			bin_start(binstart),
 			bin_stop(binstop)
 	{};
@@ -36,6 +37,7 @@ class FitFunction{
 	private:
 		const TH2F response_matrix;
 		const UInt_t BINNING;
+		const Double_t inverse_BINNING;
 		const Int_t bin_start;
 		const Int_t bin_stop;
 };
