@@ -71,9 +71,11 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 		min_dist = (Double_t) NBINS;
 		best_simulation = 0;
 
+		// Do not calculate the absolute value of dist immediately, because it will be
+		// used later to shift the simulation in the right direction
 		for(Int_t j = 0; j < n_energies; ++j){
-			dist = fabs(energies[(long unsigned int) j] - (Double_t) i);
-			if(dist < min_dist){
+			dist = energies[(long unsigned int) j] - (Double_t) i;
+			if(fabs(dist) < fabs(min_dist)){
 				min_dist = dist;
 				best_simulation = j;
 			}
@@ -127,22 +129,26 @@ void InputFileReader::updateMatrix(const vector<TString> &old_filenames, const v
 		best_simulation_new = 0;
 
 		for(Int_t j = 0; j < n_energies_old; ++j){
-			dist_old = fabs(old_energies[(long unsigned int) j] - (Double_t) i);	
-			if(dist_old < min_dist_old){
+		// Do not calculate the absolute value of dist immediately, because it will be
+		// used later to shift the simulation in the right direction
+			dist_old = old_energies[(long unsigned int) j] - (Double_t) i;	
+			if(fabs(dist_old) < fabs(min_dist_old)){
 				min_dist_old = dist_old;
 				best_simulation_old = j;
 			}
 		}
 
 		for(Int_t j = 0; j < n_energies_new; ++j){
-			dist_new = fabs(new_energies[(long unsigned int) j] - (Double_t) i);
-			if(dist_new < fabs(min_dist_new)){
+		// Do not calculate the absolute value of dist immediately, because it will be
+		// used later to shift the simulation in the right direction
+			dist_new = new_energies[(long unsigned int) j] - (Double_t) i;
+			if(fabs(dist_new) < fabs(min_dist_new)){
 				min_dist_new = dist_new;
 				best_simulation_new = j;
 			}
 		}
 
-		if(min_dist_new < min_dist_old){
+		if(fabs(min_dist_new) < fabs(min_dist_old)){
 			cout << "Bin: " << i << " keV, using new simulation " << new_filenames[(long unsigned int) best_simulation_new] << " ( " << new_energies[(long unsigned int) best_simulation_new] << " )" << endl;
 			//
 			// Fill row of matrix with best simulation
