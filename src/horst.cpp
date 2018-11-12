@@ -220,13 +220,15 @@ int main(int argc, char* argv[]){
 	stringstream outputfilename;
 	outputfilename << arguments.outputfile;
 
-	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
+	TFile *outputfile = new TFile(outputfilename.str().c_str(), "RECREATE");
 
 	TDirectory *td_mc = nullptr;
 	TDirectory *td_mc_spectra = nullptr;
 	TDirectory *td_mc_fit_parameters = nullptr;
 	TDirectory *td_mc_FEP = nullptr;
 	TDirectory *td_mc_reconstructed = nullptr;
+
+	outputfile->Close();
 
 	/************ Use Top-Down unfolding to get start parameters *************/
 
@@ -262,11 +264,14 @@ int main(int argc, char* argv[]){
 
 	if(arguments.use_mc){
 		// Create directories in TFile for MC output
-		td_mc = outputfile.mkdir("monte_carlo");
+
+		outputfile = new TFile(outputfilename.str().c_str(), "UPDATE");
+		td_mc = outputfile->mkdir("monte_carlo");
 		td_mc_spectra = td_mc->mkdir("spectra");
 		td_mc_fit_parameters = td_mc->mkdir("fit_parameters");
 		td_mc_FEP = td_mc->mkdir("fep");
 		td_mc_reconstructed = td_mc->mkdir("reconstructed");
+		outputfile->Close();
 
 		cout << "> Using Monte-Carlo algorithm to determine fit uncertainty (NRANDOM == " << arguments.uncertainty_mc << ")" << endl;
 
@@ -321,12 +326,12 @@ int main(int argc, char* argv[]){
 			histname << "mc_fit_params_" << i;
 			mc_fit_params = TH1F(histname.str().c_str(), histname.str().c_str(), nbins,  0., max_bin);
 
-			if(arguments.use_mc_fast){
-				fitter.fit(*mc_spectra[j], response_matrix, fit_params, mc_fit_params, binstart, binstop);
-			} else{
-				monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, binstart, binstop);
-				fitter.fit(*mc_spectra[j], mc_matrix, fit_params, mc_fit_params, binstart, binstop);
-			}
+		//	if(arguments.use_mc_fast){
+		//		fitter.fit(*mc_spectra[j], response_matrix, fit_params, mc_fit_params, binstart, binstop);
+		//	} else{
+		//		monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, binstart, binstop);
+		//		fitter.fit(*mc_spectra[j], mc_matrix, fit_params, mc_fit_params, binstart, binstop);
+		//	}
 
 			if(arguments.write_mc_only){
 				mc_fit_params_samples[0] = &mc_fit_params;
@@ -343,19 +348,26 @@ int main(int argc, char* argv[]){
 				cout << "\t> Processed " << i << " Monte-Carlo iterations" << endl;
 
 			if(arguments.write_mc){
+				outputfile = new TFile(outputfilename.str().c_str(), "UPDATE");
+
+				td_mc_spectra = (TDirectory*) outputfile->Get("monte_carlo/spectra");
 				td_mc_spectra->cd();
 				mc_spectra[j]->Write();
 
+				td_mc_fit_parameters = (TDirectory*) outputfile->Get("monte_carlo/fit_parameters");
 				td_mc_fit_parameters->cd();
 				mc_fit_params_samples[j]->Write();
 
+				td_mc_FEP = (TDirectory*) outputfile->Get("monte_carlo/fep");
 				td_mc_FEP->cd();
 				mc_FEP_samples[j]->Write();
 
+				td_mc_reconstructed = (TDirectory*) outputfile->Get("monte_carlo/reconstructed");
 				td_mc_reconstructed->cd();
 				mc_reconstruction_samples[j]->Write();
-			}
 
+				outputfile->Close();
+			}
 		}
 		cout << "\t> Processed " << arguments.uncertainty_mc << " Monte-Carlo iterations" << endl;
 	}
@@ -460,6 +472,8 @@ int main(int argc, char* argv[]){
 	/************ Write results to file *************/
 
 	// Write (rebinned) original spectrum
+	outputfile = new TFile(outputfilename.str().c_str(), "UPDATE");
+
 	spectrum.Write();
 	spectrum_reconstructed.Write();
 	reconstruction_uncertainty.Write();
@@ -468,7 +482,7 @@ int main(int argc, char* argv[]){
 	n_simulated_particles.Write();
 
 	// Write TopDown results
-	TDirectory *td_topdown = outputfile.mkdir("topdown");
+	TDirectory *td_topdown = outputfile->mkdir("topdown");
 	td_topdown->cd();
 
 	topdown_params.Write();
@@ -478,10 +492,10 @@ int main(int argc, char* argv[]){
 	topdown_spectrum_uncertainty.Write();
 	topdown_total_uncertainty.Write();
 	topdown_spectrum_reconstructed.Write();
-	outputfile.cd();
+	outputfile->cd();
 
 	// Write fit results
-	TDirectory * td_fit = outputfile.mkdir("fit");
+	TDirectory * td_fit = outputfile->mkdir("fit");
 	td_fit->cd();
 
 	fit_params.Write();
@@ -497,6 +511,7 @@ int main(int argc, char* argv[]){
 	
 	// Write Monte-Carlo results (if Monte-Carlo uncertainty determination is activated)
 	if(arguments.use_mc){
+		td_mc = (TDirectory*) outputfile->Get("monte_carlo");
 		td_mc->cd();
 
 		mc_fit_params_mean.Write();
@@ -519,7 +534,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	outputfile.Close();
+	outputfile->Close();
 
 	cout << "> Wrote output file " << arguments.outputfile << " ..." << endl;
 
