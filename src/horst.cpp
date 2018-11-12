@@ -326,12 +326,12 @@ int main(int argc, char* argv[]){
 			histname << "mc_fit_params_" << i;
 			mc_fit_params = TH1F(histname.str().c_str(), histname.str().c_str(), nbins,  0., max_bin);
 
-		//	if(arguments.use_mc_fast){
-		//		fitter.fit(*mc_spectra[j], response_matrix, fit_params, mc_fit_params, binstart, binstop);
-		//	} else{
-		//		monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, binstart, binstop);
-		//		fitter.fit(*mc_spectra[j], mc_matrix, fit_params, mc_fit_params, binstart, binstop);
-		//	}
+			if(arguments.use_mc_fast){
+				fitter.fit(*mc_spectra[j], response_matrix, fit_params, mc_fit_params, binstart, binstop);
+			} else{
+				monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, binstart, binstop);
+				fitter.fit(*mc_spectra[j], mc_matrix, fit_params, mc_fit_params, binstart, binstop);
+			}
 
 			if(arguments.write_mc_only){
 				mc_fit_params_samples[0] = &mc_fit_params;

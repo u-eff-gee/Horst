@@ -93,6 +93,8 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, Int_t binstart, Int_t binstop){
 
 	FitFunction fitFunction(rema, BINNING, binstart, binstop);
+	// The following line seems to be responsible for cumulating memory usage which scales with
+	// the number of MC realizations.
 	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, (Int_t) NBINS/ (Int_t) BINNING);
 
 	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
