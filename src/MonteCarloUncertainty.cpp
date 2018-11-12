@@ -29,7 +29,7 @@ using std::vector;
 using ROOT::Math::normal_cdf;
 using ROOT::Math::normal_quantile;
 
-void MonteCarloUncertainty::evaluateMeanAndStd(TH1F &mc_mean, TH1F &mc_standard_deviation, const vector<TH1F> &mc_histograms, const Int_t binstart, const Int_t binstop){
+void MonteCarloUncertainty::evaluateMeanAndStd(TH1F &mc_mean, TH1F &mc_standard_deviation, const vector<TH1F*> &mc_histograms, const Int_t binstart, const Int_t binstop){
 	const UInt_t nrandom = (UInt_t) mc_histograms.size();
 
 	vector<Double_t> values(nrandom, 0.);
@@ -40,7 +40,7 @@ void MonteCarloUncertainty::evaluateMeanAndStd(TH1F &mc_mean, TH1F &mc_standard_
 			mc_standard_deviation.SetBinContent((Int_t) i, 0.);
 		} else{
 			for(UInt_t j = 0; j < nrandom; ++j){
-				values[j] = mc_histograms[j].GetBinContent((Int_t) i);
+				values[j] = mc_histograms[j]->GetBinContent((Int_t) i);
 			}
 
 			Double_t mean = get_mean(values);

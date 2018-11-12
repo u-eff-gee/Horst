@@ -51,6 +51,7 @@ struct Arguments{
 	Bool_t use_mc = false;
 	Bool_t use_mc_fast = false;
 	Bool_t write_mc = false;
+	Bool_t write_mc_only = false;
 	TString correlation_matrix_filename = "correlation_matrix.txt";
 	TString outputfile = "output.root";
 	UInt_t left = 0;
@@ -70,6 +71,7 @@ static struct argp_option options[] = {
 	{"uncertainty_mc", 'u', "NRANDOM", 0, "Determine uncertainty using a Monte-Carlo (MC) method to include correlations. NRANDOM is the number of MC iterations (default: 10).", 0},
 	{"uncertainty_mc_fast", 'U', "NRANDOM", 0, "Similar to '-u' option, but do not vary the response matrix when estimating the statistical uncertainty. This option can be used to disentangle the statistical uncertainty introduced by the input spectrum and the response matrix. Overrides the '-u' option if both are set.", 0},
 	{"write_mc", 'w', 0, 0, "Write MC-generated spectra and reconstructed spectra. This option is ignored if '-u' option is not used.", 0},
+	{"write_mc_only", 'W', 0, 0, "Similar to '-w' option, but does not evaluate MC results afterwards (i.e. leaves calculation of mean value and uncertainties to the user). The advantage compared to the '-w' option is that horst does not have to keep all MC spectra in memory until the end of the program execution, potentially saving a lot of RAM. MC spectra are dumped to file immediately.", 0},
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"left", 'l', "LEFT", 0, "Left limit of fit range", 0},
 	{"right", 'r', "RIGHT", 0, "Right limit of fit range", 0},
@@ -92,6 +94,7 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'u': arguments->use_mc = true; arguments->uncertainty_mc = (UInt_t) atoi(arg); break;
 		case 'U': arguments->use_mc_fast = true; arguments->use_mc = true; arguments->uncertainty_mc = (UInt_t) atoi(arg); break;
 		case 'w': arguments->write_mc = true; break;
+		case 'W': arguments->write_mc = true; arguments->write_mc_only = true; break;
 		case 'o': arguments->outputfile = arg; break;
 		case 'l': arguments->left= (UInt_t) atoi(arg); break;
 		case 'r': arguments->right= (UInt_t) atoi(arg); break;
@@ -175,10 +178,10 @@ int main(int argc, char* argv[]){
 	TH1F reconstruction_uncertainty_up("reconstruction_uncertainty_up", "Reconstruction Uncertainty upper Limit", nbins, 0., max_bin);
 
 	// Monte-Carlo Uncertainty
-	vector<TH1F> mc_spectra;
-	vector<TH1F> mc_fit_params_samples;
-	vector<TH1F> mc_FEP_samples;
-	vector<TH1F> mc_reconstruction_samples;
+	vector<TH1F*> mc_spectra;
+	vector<TH1F*> mc_fit_params_samples;
+	vector<TH1F*> mc_FEP_samples;
+	vector<TH1F*> mc_reconstruction_samples;
 
 	TH2F mc_matrix;
 	TH1F mc_fit_params, mc_fit_params_mean, mc_fit_params_uncertainty, mc_fit_total_uncertainty;
@@ -209,6 +212,21 @@ int main(int argc, char* argv[]){
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
 	response_matrix.Rebin2D((Int_t) arguments.binning, (Int_t) arguments.binning);
 	n_simulated_particles.Rebin((Int_t) arguments.binning);
+
+	/************ Create output file *****************/
+
+	cout << "> Opening output file " << arguments.outputfile << " ..." << endl;
+
+	stringstream outputfilename;
+	outputfilename << arguments.outputfile;
+
+	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
+
+	TDirectory *td_mc = nullptr;
+	TDirectory *td_mc_spectra = nullptr;
+	TDirectory *td_mc_fit_parameters = nullptr;
+	TDirectory *td_mc_FEP = nullptr;
+	TDirectory *td_mc_reconstructed = nullptr;
 
 	/************ Use Top-Down unfolding to get start parameters *************/
 
@@ -243,6 +261,13 @@ int main(int argc, char* argv[]){
 	reconstructor.reconstruct(fit_params, n_simulated_particles, spectrum_reconstructed);
 
 	if(arguments.use_mc){
+		// Create directories in TFile for MC output
+		td_mc = outputfile.mkdir("monte_carlo");
+		td_mc_spectra = td_mc->mkdir("spectra");
+		td_mc_fit_parameters = td_mc->mkdir("fit_parameters");
+		td_mc_FEP = td_mc->mkdir("fep");
+		td_mc_reconstructed = td_mc->mkdir("reconstructed");
+
 		cout << "> Using Monte-Carlo algorithm to determine fit uncertainty (NRANDOM == " << arguments.uncertainty_mc << ")" << endl;
 
 		stringstream histname("");
@@ -252,35 +277,85 @@ int main(int argc, char* argv[]){
 
 		mc_fit_params = TH1F ("mc_fit_params", "MC Fit Parameters", nbins, 0., max_bin);
 
+		// If the '-W' option is used, always write new MC spectra to the 0-th entry of the
+		// vectors mc_spectra, mc_FEP_samples and mc_reconstruction_samples to save memory
+		if(arguments.write_mc_only){
+			mc_spectra.push_back(new TH1F(histname.str().c_str(), histname.str().c_str(), nbins,  0., max_bin));
+			mc_FEP_samples.push_back(new TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin));
+			mc_reconstruction_samples.push_back(new TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin));
+			mc_fit_params_samples.push_back(new TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin));
+		}
+
+		UInt_t j = 0;
+
 		for(UInt_t i = 0; i < arguments.uncertainty_mc; ++i){
-			histname << "mc_spectrum_" << i;
-			mc_spectra.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), nbins,  0., max_bin));
-			histname.str("");
-			histname << "mc_FEP_" << i;
-			mc_FEP_samples.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin));
 
-			histname.str("");
-			histname << "mc_reconstructed_spectrum_" << i;
-			mc_reconstruction_samples.push_back(TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin));
+			// If '-W' option is used, do not push back new entries, but work with the 0-th element
+			if(arguments.write_mc_only){
+				histname << "mc_spectrum_" << i;
+				mc_spectra[0] = new TH1F(histname.str().c_str(), histname.str().c_str(), nbins,  0., max_bin);
+				histname.str("");
+				histname << "mc_FEP_" << i;
+				mc_FEP_samples[0] = new TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin);
 
-			monteCarloUncertainty.apply_fluctuations(mc_spectra[i], spectrum, nbins, binstop);
-
-			if(arguments.use_mc_fast){
-				fitter.fit(mc_spectra[i], response_matrix, fit_params, mc_fit_params, binstart, binstop);
+				histname.str("");
+				histname << "mc_reconstructed_spectrum_" << i;
+				mc_reconstruction_samples[0] = new TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin);
 			} else{
-				monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, binstart, binstop);
-				fitter.fit(mc_spectra[i], mc_matrix, fit_params, mc_fit_params, binstart, binstop);
+				histname << "mc_spectrum_" << i;
+				mc_spectra.push_back(new TH1F(histname.str().c_str(), histname.str().c_str(), nbins,  0., max_bin));
+				histname.str("");
+				histname << "mc_FEP_" << i;
+				mc_FEP_samples.push_back(new TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin));
+
+				histname.str("");
+				histname << "mc_reconstructed_spectrum_" << i;
+				mc_reconstruction_samples.push_back(new TH1F(histname.str().c_str(), histname.str().c_str(), nbins, 0., max_bin));
+
+				j = i;
 			}
+
+			monteCarloUncertainty.apply_fluctuations(*mc_spectra[j], spectrum, nbins, binstop);
 
 			histname.str("");
 			histname << "mc_fit_params_" << i;
-			mc_fit_params_samples.push_back(mc_fit_params);
-			reconstructor.reconstruct(mc_fit_params, n_simulated_particles, mc_reconstruction_samples[i]);
-			fitter.fittedFEP(mc_fit_params, response_matrix, mc_FEP_samples[i]);
+			mc_fit_params = TH1F(histname.str().c_str(), histname.str().c_str(), nbins,  0., max_bin);
+
+			if(arguments.use_mc_fast){
+				fitter.fit(*mc_spectra[j], response_matrix, fit_params, mc_fit_params, binstart, binstop);
+			} else{
+				monteCarloUncertainty.apply_fluctuations(mc_matrix, response_matrix, binstart, binstop);
+				fitter.fit(*mc_spectra[j], mc_matrix, fit_params, mc_fit_params, binstart, binstop);
+			}
+
+			if(arguments.write_mc_only){
+				mc_fit_params_samples[0] = &mc_fit_params;
+			}
+			else{
+				mc_fit_params_samples.push_back(&mc_fit_params);
+			}
+
+			reconstructor.reconstruct(mc_fit_params, n_simulated_particles, *mc_reconstruction_samples[j]);
+			fitter.fittedFEP(mc_fit_params, response_matrix, *mc_FEP_samples[j]);
 			histname.str("");
 
 			if(i % MC_UPDATE_INTERVAL == 0 && i > 0)
 				cout << "\t> Processed " << i << " Monte-Carlo iterations" << endl;
+
+			if(arguments.write_mc){
+				td_mc_spectra->cd();
+				mc_spectra[j]->Write();
+
+				td_mc_fit_parameters->cd();
+				mc_fit_params_samples[j]->Write();
+
+				td_mc_FEP->cd();
+				mc_FEP_samples[j]->Write();
+
+				td_mc_reconstructed->cd();
+				mc_reconstruction_samples[j]->Write();
+			}
+
 		}
 		cout << "\t> Processed " << arguments.uncertainty_mc << " Monte-Carlo iterations" << endl;
 	}
@@ -289,7 +364,7 @@ int main(int argc, char* argv[]){
 	vector<TH1F*> uncertainties;
 
 	// Uncertainty of Monte-Carlo method
-	if(arguments.use_mc){
+	if(arguments.use_mc && !arguments.write_mc_only){
 
 		cout << "> Evaluating Monte-Carlo results ..." << endl;
 
@@ -384,14 +459,6 @@ int main(int argc, char* argv[]){
 
 	/************ Write results to file *************/
 
-	// Open output file
-	cout << "> Writing output file " << arguments.outputfile << " ..." << endl;
-
-	stringstream outputfilename;
-	outputfilename << arguments.outputfile;
-
-	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
-
 	// Write (rebinned) original spectrum
 	spectrum.Write();
 	spectrum_reconstructed.Write();
@@ -430,7 +497,6 @@ int main(int argc, char* argv[]){
 	
 	// Write Monte-Carlo results (if Monte-Carlo uncertainty determination is activated)
 	if(arguments.use_mc){
-		TDirectory *td_mc = outputfile.mkdir("monte_carlo");
 		td_mc->cd();
 
 		mc_fit_params_mean.Write();
@@ -445,38 +511,17 @@ int main(int argc, char* argv[]){
 		mc_FEP_uncertainty_low.Write();
 		mc_FEP_uncertainty_up.Write();
 
-		// Write Monte-Carlo sampled spectra (if the corresponding flag was set)
-		if(arguments.use_mc && arguments.write_mc){
-			TDirectory *td_mc_spectra = td_mc->mkdir("spectra");
-			td_mc_spectra->cd();
-				for(auto s : mc_spectra)
-					s.Write();
-			TDirectory *td_mc_fit_parameters = td_mc->mkdir("fit_parameters");
-			td_mc_fit_parameters->cd();
-				for(auto s : mc_fit_params_samples)
-					s.Write();
-			outputfile.cd();
-			TDirectory *td_mc_FEP = td_mc->mkdir("fep");
-			td_mc_FEP->cd();
-				for(auto s : mc_FEP_samples)
-					s.Write();
-			outputfile.cd();
-			TDirectory *td_mc_reconstructed = td_mc->mkdir("reconstructed");
-			td_mc_reconstructed->cd();
-				for(auto s : mc_reconstruction_samples)
-					s.Write();
-			outputfile.cd();
+		if(!arguments.write_mc_only){
+			mc_spectrum_reconstructed.Write();
+			mc_reconstruction_uncertainty.Write();
+			mc_reconstruction_uncertainty_low.Write();
+			mc_reconstruction_uncertainty_up.Write();
 		}
-
-		outputfile.cd();
-
-		mc_spectrum_reconstructed.Write();
-		mc_reconstruction_uncertainty.Write();
-		mc_reconstruction_uncertainty_low.Write();
-		mc_reconstruction_uncertainty_up.Write();
 	}
 
 	outputfile.Close();
+
+	cout << "> Wrote output file " << arguments.outputfile << " ..." << endl;
 
 	outputfilename.str("");
 	outputfilename << arguments.correlation_matrix_filename;
