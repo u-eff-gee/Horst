@@ -20,7 +20,7 @@
 #include "Uncertainty.h"
 
 void Uncertainty::getUncertainty(const TH1F &params, const TH2F &rema, TH1F &simulation_statistical_uncertainty, const Int_t binstart, const Int_t binstop){
-	FitFunction fitFunction(rema, BINNING, binstart, binstop);
+	FitFunction fitFunction("rema_stat", rema, BINNING, binstart, binstop);
 
 	for(Int_t i = 1; i <= (Int_t) NBINS/ (Int_t) BINNING; ++i){
 		if(i < binstart || i > binstop){
@@ -32,7 +32,7 @@ void Uncertainty::getUncertainty(const TH1F &params, const TH2F &rema, TH1F &sim
 }
 
 void Uncertainty::getUncertainty(const TH1F &params, const TH1F &spectrum, const TH2F &rema, TH1F &simulation_statistical_uncertainty, TH1F &spectrum_statistical_uncertainty, const Int_t binstart, const Int_t binstop){
-	FitFunction fitFunction(rema, BINNING, binstart, binstop);
+	FitFunction fitFunction("rema_unc", rema, BINNING, binstart, binstop);
 
 	for(Int_t i = 1; i <= (Int_t) NBINS/ (Int_t) BINNING; ++i){
 		if(i < binstart || i > binstop){

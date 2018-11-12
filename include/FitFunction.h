@@ -22,20 +22,33 @@
 
 class FitFunction{
 	public:
-		FitFunction(const TH2F &rema, const UInt_t binning, Int_t binstart, Int_t binstop): 
-			response_matrix(rema),
+		FitFunction(const TString name, const TH2F &rema, const UInt_t binning, Int_t binstart, Int_t binstop): 
+			response_matrix(TH2F(name, name, rema.GetNbinsX(), rema.GetXaxis()->GetXmin(), rema.GetXaxis()->GetXmax(), rema.GetNbinsY(), rema.GetYaxis()->GetXmin(), rema.GetYaxis()->GetXmax())),
 			BINNING(binning),
 			inverse_BINNING(1./binning),
 			bin_start(binstart),
 			bin_stop(binstop)
-	{};
+	{
+		for(UInt_t i = 1; i <= rema.GetNbinsX(); ++i){
+			for(UInt_t j = 1; j <= rema.GetNbinsX(); ++j){
+				response_matrix.SetBinContent(i, j, rema.GetBinContent(i, j));
+			}
+		}
+	};
 		~FitFunction(){};
 		Double_t operator()(Double_t *x, Double_t *p);
 		Double_t getSimulationStatisticalUncertainty(const Int_t bin, const TH1F &params);
 		Double_t getSpectrumStatisticalUncertainty(const Int_t bin, const TH1F &params, const TH1F &spectrum);
+		void setResponseMatrix(const TH2F &rema){
+			for(UInt_t i = 1; i <= rema.GetNbinsX(); ++i){
+				for(UInt_t j = 1; j <= rema.GetNbinsX(); ++j){
+					response_matrix.SetBinContent(i, j, rema.GetBinContent(i, j));
+				}
+			}
+		};
 
 	private:
-		const TH2F response_matrix;
+		TH2F response_matrix;
 		const UInt_t BINNING;
 		const Double_t inverse_BINNING;
 		const Int_t bin_start;

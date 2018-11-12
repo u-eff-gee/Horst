@@ -138,7 +138,6 @@ int main(int argc, char* argv[]){
 
 	InputFileReader inputFileReader(arguments.binning);
 	TMatrixDSym correlation_matrix(nbins);
-	Fitter fitter(arguments.binning);
 	Reconstructor reconstructor(arguments.binning);
 	MonteCarloUncertainty monteCarloUncertainty(arguments.binning, arguments.seed);
 	Uncertainty uncertainty(arguments.binning);
@@ -199,6 +198,7 @@ int main(int argc, char* argv[]){
 	}
 
 	/************ Read and rebin spectrum and response matrix *************/
+	/************ + initialize Fitter using the response matrix ***********/
 
 	cout << "> Reading spectrum file " << arguments.spectrumfile << " ..." << endl;
 	if(arguments.tfile){
@@ -212,6 +212,8 @@ int main(int argc, char* argv[]){
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
 	response_matrix.Rebin2D((Int_t) arguments.binning, (Int_t) arguments.binning);
 	n_simulated_particles.Rebin((Int_t) arguments.binning);
+
+	Fitter fitter(response_matrix, arguments.binning, binstart, binstop);
 
 	/************ Create output file *****************/
 

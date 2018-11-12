@@ -103,7 +103,6 @@ int main(int argc, char* argv[]){
 
 	InputFileReader inputFileReader(arguments.binning);
 	Reconstructor reconstructor(arguments.binning);
-	Fitter fitter(arguments.binning);
 
 	/************ Initialize histograms *************/
 
@@ -134,6 +133,7 @@ int main(int argc, char* argv[]){
 	}
 
 	/************ Read and rebin spectrum and response matrix *************/
+	/************ + initialize Fitter using the response matrix ***********/
 
 	cout << "> Reading spectrum file " << arguments.spectrumfile << " ..." << endl;
 	if(arguments.tfile)
@@ -150,6 +150,8 @@ int main(int argc, char* argv[]){
 
 	for(Int_t i = 0; i <= (Int_t) NBINS/(Int_t) arguments.binning; ++i)
 		inverse_n_simulated_particles.SetBinContent(i, 1./n_simulated_particles.GetBinContent(i));
+
+	Fitter fitter(response_matrix, arguments.binning,0., (Double_t) (NBINS - 1));
 
 	/************ Add response to experimental spectrum *************/
 

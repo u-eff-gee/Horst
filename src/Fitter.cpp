@@ -18,11 +18,9 @@
 #include <iostream>
 #include <vector>
 
-#include <TF1.h>
 #include <TFitResult.h>
 
 #include "Config.h"
-#include "FitFunction.h"
 #include "Fitter.h"
 
 using std::cout;
@@ -51,17 +49,16 @@ void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t
 
 void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit_uncertainty, Int_t binstart, Int_t binstop, const Bool_t verbose, const Bool_t correlation, TMatrixDSym &correlation_matrix){
 
-	FitFunction fitFunction(rema, BINNING, binstart, binstop);
-	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, (Int_t) NBINS/ (Int_t) BINNING);
+	fitFunction.setResponseMatrix(rema);
 
 	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
 
 	for(Int_t i = 0; i <= start_params.GetNbinsX(); ++i){
 		if(i < binstart || i >= binstop){
-			fitf.FixParameter(i, 0.);
+			fitf->FixParameter(i, 0.);
 		} else{
-			fitf.SetParameter(i, start_params.GetBinContent(i));
-			fitf.SetParLimits(i, 0., fit_upper_limit);
+			fitf->SetParameter(i, start_params.GetBinContent(i));
+			fitf->SetParLimits(i, 0., fit_upper_limit);
 		}
 	}
 
@@ -82,29 +79,26 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 		}
 	}
 
-	chi2 = fitf.GetChisquare();
+	chi2 = fitf->GetChisquare();
 
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
-		params.SetBinContent(i, fitf.GetParameter(i-1));
-		fit_uncertainty.SetBinContent(i, fitf.GetParError(i-1));
+		params.SetBinContent(i, fitf->GetParameter(i-1));
+		fit_uncertainty.SetBinContent(i, fitf->GetParError(i-1));
 	}
 }
 
 void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, Int_t binstart, Int_t binstop){
 
-	FitFunction fitFunction(rema, BINNING, binstart, binstop);
-	// The following line seems to be responsible for cumulating memory usage which scales with
-	// the number of MC realizations.
-	TF1 fitf("fitf", fitFunction, 0., (Double_t) NBINS-1, (Int_t) NBINS/ (Int_t) BINNING);
+	fitFunction.setResponseMatrix(rema);
 
 	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
 
 	for(Int_t i = 0; i <= start_params.GetNbinsX(); ++i){
 		if(i < binstart || i >= binstop){
-			fitf.FixParameter(i, 0.);
+			fitf->FixParameter(i, 0.);
 		} else{
-			fitf.SetParameter(i, start_params.GetBinContent(i));
-			fitf.SetParLimits(i, 0., fit_upper_limit);
+			fitf->SetParameter(i, start_params.GetBinContent(i));
+			fitf->SetParLimits(i, 0., fit_upper_limit);
 		}
 
 	}
@@ -112,7 +106,7 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 	spectrum.Fit("fitf", "0QN", "", (UInt_t) binstart*BINNING, (UInt_t) binstop*BINNING);
 
 	for(Int_t i = 1; i <= start_params.GetNbinsX(); ++i){
-		params.SetBinContent(i, fitf.GetParameter(i-1));
+		params.SetBinContent(i, fitf->GetParameter(i-1));
 	}
 }
 
@@ -123,8 +117,6 @@ void Fitter::fittedFEP(const TH1F &params, const TH2F &rema, TH1F &fitted_FEP){
 }
 
 void Fitter::fittedSpectrum(const TH1F &params, const TH2F &rema, TH1F &fitted_spectrum){
-
-	FitFunction fitFunction(rema, BINNING, 0, (Int_t) NBINS/ (Int_t) BINNING);	
 
 	vector<Double_t> parameters((long unsigned int) NBINS/ (long unsigned int) BINNING + 1);
 	for(Int_t i = 1; i <= (Int_t) NBINS/ (Int_t) BINNING; ++i)
