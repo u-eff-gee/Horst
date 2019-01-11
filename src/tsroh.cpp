@@ -145,7 +145,10 @@ int main(int argc, char* argv[]){
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
-	response_matrix.Rebin2D((Int_t) arguments.binning, (Int_t) arguments.binning);
+	if(arguments.binning != 1){
+		cout << "> Rebinning response matrix ..." << endl;
+		response_matrix.Rebin2D((Int_t) arguments.binning, (Int_t) arguments.binning);
+	}
 	n_simulated_particles.Rebin((Int_t) arguments.binning);
 
 	for(Int_t i = 0; i <= (Int_t) NBINS/(Int_t) arguments.binning; ++i)
@@ -158,7 +161,10 @@ int main(int argc, char* argv[]){
 	cout << "> Adding response to spectrum ..." << endl;
 	if(arguments.statistics){
 		reconstructor.addRealisticResponse(spectrum, inverse_n_simulated_particles, response_matrix, response_spectrum, response_spectrum_FEP);
-		fitter.remove_negative(response_spectrum);
+		// Not necessary any more when sampling from Poisson distribution
+		// Even if a negative mean value parameter is given to TRandom3::Poisson()
+		// the function will simply return zero
+		// fitter.remove_negative(response_spectrum);
 	} else{
 		reconstructor.addResponse(spectrum, inverse_n_simulated_particles, response_matrix, response_spectrum, response_spectrum_FEP);
 	}
