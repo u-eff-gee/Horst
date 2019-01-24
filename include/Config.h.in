@@ -15,9 +15,10 @@
     along with Horst.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <string>
+#ifndef CONFIG_H_IN
+#define CONFIG_H_IN 1
 
-using std::string;
-
-const unsigned int NBINS = 12000;
+const unsigned int NBINS = ${N_BINS};
 const unsigned int MC_UPDATE_INTERVAL = 10;
+
+#endif 

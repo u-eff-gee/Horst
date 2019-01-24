@@ -109,11 +109,7 @@ int main(int argc, char* argv[]){
 	// Input
 	TH1F spectrum;
 
-	if(arguments.tfile){
-		spectrum = TH1F("spectrum", "Input Spectrum", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1);
-	} else {
-		spectrum = TH1F("spectrum", "Input Spectrum", (Int_t) NBINS, 0., (Double_t) NBINS - 1);
-	}
+	spectrum = TH1F("spectrum", "Input Spectrum", (Int_t) NBINS, 0., (Double_t) NBINS - 1);
 
 	TH1F n_simulated_particles("n_simulated_particles", "Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
 	TH1F inverse_n_simulated_particles("inverse_n_simulated_particles", "1 / Number of simulated particles per bin", NBINS, 0., (Double_t) NBINS - 1);
@@ -140,6 +136,9 @@ int main(int argc, char* argv[]){
 		inputFileReader.readROOTSpectrum(spectrum, arguments.spectrumfile, arguments.spectrumname);
 	else{
 		inputFileReader.readTxtSpectrum(spectrum, arguments.spectrumfile);
+	}
+	if(arguments.binning != 1){
+		cout << "> Rebinning spectrum ..." << endl;
 		spectrum.Rebin((Int_t) arguments.binning);
 	}
 

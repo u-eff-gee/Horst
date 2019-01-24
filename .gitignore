@@ -12,6 +12,7 @@
 # Output
 output/*
 !output/.o
+Testing/*
 
 # Build directory
 build/
@@ -23,6 +24,7 @@ makematrix
 convert_to_txt
 tsroh
 CMakeFiles/*
+include/CMakeFiles/*
 src/CMakeFiles/*
 CTestTestfile.cmake
 DartConfiguration.tcl
@@ -30,6 +32,8 @@ Makefile
 cmake_install.cmake
 src/cmake_install.cmake
 src/*.a
+include/Config.h
+include/ConfigTest.h
 
 # LaTex output
 doc/doc.aux

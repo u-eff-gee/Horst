@@ -28,6 +28,18 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wconversion -Wsign-conversion")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3") # -ftree_vectorize and -march=native had no effect
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}")
 
+# Compile options
+set(N_BINS 12000 CACHE STRING "Set the number of bins (default : 12000)")
+
+configure_file(
+	"${PROJECT_SOURCE_DIR}/include/Config.h.in"
+	"${PROJECT_SOURCE_DIR}/include/Config.h"
+)
+configure_file(
+	"${PROJECT_SOURCE_DIR}/include/ConfigTest.h.in"
+	"${PROJECT_SOURCE_DIR}/include/ConfigTest.h"
+)
+
 # ROOT libraries
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 find_package(ROOT REQUIRED)

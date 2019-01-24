@@ -7,7 +7,7 @@
  2. [Prerequisites](#prerequisites)
  3. [Installation](#installation)
 
-    3.1 [Tests](#tests)
+    3.1 [Testing](#testing)
 
     3.2 [Documentation](#documentation)
 
@@ -75,7 +75,7 @@ The `make` step should create five executable binaries:
 
 The Makefile also supports the command `make clean` to remove all files which were created in the compilation step.
 
-### 3.1 Testing
+### 3.1 Testing <a name="testing"></a>
 
 After completing the steps above, a self-test of the code can be run by executing
 

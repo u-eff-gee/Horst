@@ -210,6 +210,7 @@ int main(int argc, char* argv[]){
 
 	cout << "> Reading matrix file " << arguments.matrixfile << " ..." << endl;
 	inputFileReader.readMatrix(response_matrix, n_simulated_particles, arguments.matrixfile);
+	cout << "> Rebinning response matrix ..." << endl;
 	response_matrix.Rebin2D((Int_t) arguments.binning, (Int_t) arguments.binning);
 	n_simulated_particles.Rebin((Int_t) arguments.binning);
 
