@@ -17,10 +17,19 @@ output/*
 build/
 
 # Compiled files
+create_test_data
 horst
 makematrix
 convert_to_txt
 tsroh
+CMakeFiles/*
+src/CMakeFiles/*
+CTestTestfile.cmake
+DartConfiguration.tcl
+Makefile
+cmake_install.cmake
+src/cmake_install.cmake
+src/*.a
 
 # LaTex output
 doc/doc.aux
