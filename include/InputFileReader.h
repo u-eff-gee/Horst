@@ -28,6 +28,7 @@ using std::vector;
 
 class InputFileReader{
 public:
+	InputFileReader():BINNING(1){};
 	InputFileReader(const UInt_t binning):BINNING(binning){};
 	~InputFileReader(){};
 
@@ -45,6 +46,9 @@ public:
 	void readTxtSpectrum(TH1F &spectrum, const TString spectrumfile);
 	
 	void readROOTSpectrum(TH1F &spectrum, const TString spectrumfile, const TString spectrumname);
+
+	void readHorstLimits(vector<unsigned int> &limits, const TString inputfilename);
+	void createInputFile(UInt_t left, UInt_t right, TString inputfilename) const;
 
 private:
 	const UInt_t BINNING;

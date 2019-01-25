@@ -13,6 +13,7 @@
 output/*
 !output/.o
 Testing/*
+test/*limits.txt
 
 # Build directory
 build/

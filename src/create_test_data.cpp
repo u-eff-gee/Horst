@@ -44,5 +44,4 @@ int main(int argc, char* argv[]){
 	cout << "Creating test reponse matrix with option '" << argv[2] << "' ..." << endl;
 	ResponseMatrixCreator responseMatrixCreator;
 	responseMatrixCreator.createResponseMatrix(response_matrix, n_simulated_particles, argv[2], argv[3]);
-
 }

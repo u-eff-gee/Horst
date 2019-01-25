@@ -56,6 +56,8 @@ struct Arguments{
 	TString outputfile = "output.root";
 	UInt_t left = 0;
 	UInt_t right = NBINS;
+	TString limitfile = "";
+	Bool_t limits_from_file = false;
 	Bool_t interactive_mode = false;
 	Bool_t tfile = false;
 	Bool_t verbose = false;
@@ -75,6 +77,7 @@ static struct argp_option options[] = {
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"left", 'l', "LEFT", 0, "Left limit of fit range", 0},
 	{"right", 'r', "RIGHT", 0, "Right limit of fit range", 0},
+	{"limit_file", 'L', "LIMITFILE", 0, "Read whitespace-separated limits from a single-line file", 0},
 	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
 	{"tfile", 't', "SPECTRUM", 0, "Select SPECTRUM from a ROOT file called INPUTFILENAME, instead of a text file."
 	" Spectrum must be an object of TH1F.", 0},
@@ -97,6 +100,7 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'W': arguments->write_mc = true; arguments->write_mc_only = true; break;
 		case 'o': arguments->outputfile = arg; break;
 		case 'l': arguments->left= (UInt_t) atoi(arg); break;
+		case 'L': arguments->limitfile = arg; arguments->limits_from_file= true; break;
 		case 'r': arguments->right= (UInt_t) atoi(arg); break;
 		case 'i': arguments->interactive_mode= true; break;
 		case 't': arguments->tfile = true; arguments->spectrumname = arg; break;
@@ -131,16 +135,24 @@ int main(int argc, char* argv[]){
 
 	/************ Initialize auxiliary classes *************/
 
+	InputFileReader inputFileReader(arguments.binning);
+	if(arguments.limits_from_file){
+		vector<UInt_t> limits;
+		inputFileReader.readHorstLimits(limits, arguments.limitfile);
+		arguments.left = limits[0];
+		arguments.right = limits[1];
+	}
+
 	const Int_t nbins = (Int_t) NBINS / (Int_t) arguments.binning;
 	const Double_t max_bin = (Double_t) NBINS - 1.;
 	const Int_t binstart = (Int_t) arguments.left / (Int_t) arguments.binning; 
 	const Int_t binstop = (Int_t) arguments.right / (Int_t) arguments.binning; 
 
-	InputFileReader inputFileReader(arguments.binning);
 	TMatrixDSym correlation_matrix(nbins);
 	Reconstructor reconstructor(arguments.binning);
 	MonteCarloUncertainty monteCarloUncertainty(arguments.binning, arguments.seed);
 	Uncertainty uncertainty(arguments.binning);
+
 
 	/************ Initialize histograms *************/
 

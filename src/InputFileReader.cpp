@@ -293,3 +293,40 @@ void InputFileReader::writeCorrelationMatrix(TMatrixDSym &correlation_matrix, TS
 
 	outputfile.close();
 }
+
+void InputFileReader::readHorstLimits(vector<UInt_t> &limits, const TString inputfilename){
+	
+	cout << "> Reading input file " << inputfilename << " ..." << endl;
+
+	ifstream file;	
+	file.open(inputfilename);
+	string line, left, right;
+	stringstream sst;
+
+	if(file.is_open()){
+		getline(file, line);
+		sst.str(line);
+		sst >> left >> right;
+		limits.push_back((UInt_t) atoi(left.c_str()));
+		limits.push_back((UInt_t) atoi(right.c_str()));
+		file.close();
+	} else{
+		cout << "Error: File " << inputfilename << " could not be opened." << endl;
+	}
+}
+
+void InputFileReader::createInputFile(UInt_t left, UInt_t right, TString inputfilename) const {
+
+	cout << "Writing input file " << inputfilename << " ..." << endl;
+
+	ofstream file;	
+	file.open(inputfilename);
+
+	if(file.is_open()){
+		file << left << "\t" << right;
+		file.close();
+	} else{
+		cout << "Error: File " << inputfilename << " could not be opened." << endl;
+	}
+
+}
