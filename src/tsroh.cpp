@@ -30,6 +30,7 @@
 #include "Config.h"
 #include "InputFileReader.h"
 #include "Reconstructor.h"
+#include "Resolution.h"
 #include "Fitter.h"
 
 using std::cout;
@@ -43,6 +44,7 @@ struct Arguments{
 	TString spectrumname = "";
 	TString matrixfile = "";
 	TString outputfile = "output.root";
+	vector<Double_t> resolution_params = {0., 0.};
 	Bool_t interactive_mode = false;
 	Bool_t statistics = false;
 	Bool_t tfile = false;
@@ -52,10 +54,11 @@ static char doc[] = "Tsroh, Transfer spectroscopic response on histogram";
 static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
-	{"binning", 'b', "arguments.binning", 0, "Rebinning factor for input histograms (default: 10)", 0},
+	{"binning", 'b', "BINNING", 0, "Rebinning factor for input histograms (default: 10)", 0},
 	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix", 0},
 	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
 	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
+	{"resolution", 'r', "RESOLUTION", 0, "Set detector resolution in units of bins (default: 0)", 0},
 	{"statistics", 's', 0, 0, "Add statistical fluctuations to response (switched off by default)", 0},
 	{"tfile", 't', "SPECTRUM", 0, "Select SPECTRUM from a ROOT file called INPUTFILENAME, instead of a text file."
 	" Spectrum must be an object of TH1F.", 0},
@@ -71,6 +74,9 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'm': arguments->matrixfile= arg; break;
 		case 'o': arguments->outputfile = arg; break;
 		case 'i': arguments->interactive_mode= true; break;
+		case 'r': arguments->resolution_params[0] = atof(arg); 
+			  arguments->resolution_params[1] = 0.;
+			  break;
 		case 's': arguments->statistics= true; break;
 		case 't': arguments->tfile = true; arguments->spectrumname = arg; break;
 		case ARGP_KEY_END:
@@ -103,6 +109,7 @@ int main(int argc, char* argv[]){
 
 	InputFileReader inputFileReader(arguments.binning);
 	Reconstructor reconstructor(arguments.binning);
+	Resolution resolution(arguments.binning);
 
 	/************ Initialize histograms *************/
 
@@ -117,6 +124,7 @@ int main(int argc, char* argv[]){
 
 	// Output
 	
+	TH1F high_resolution_spectrum("high_resolution_spectrum", "Response Spectrum if measured with perfect Resolution", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
 	TH1F response_spectrum("response_spectrum", "Spectrum with Response", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
 	TH1F response_spectrum_FEP("response_spectrum_FEP", "Spectrum with Response, normalized to FEP", (Int_t) NBINS/ (Int_t) arguments.binning, 0., (Double_t) NBINS - 1); 
 
@@ -159,13 +167,24 @@ int main(int argc, char* argv[]){
 
 	cout << "> Adding response to spectrum ..." << endl;
 	if(arguments.statistics){
-		reconstructor.addRealisticResponse(spectrum, inverse_n_simulated_particles, response_matrix, response_spectrum, response_spectrum_FEP);
+		reconstructor.addRealisticResponse(spectrum, inverse_n_simulated_particles, response_matrix, high_resolution_spectrum, response_spectrum_FEP);
 		// Not necessary any more when sampling from Poisson distribution
 		// Even if a negative mean value parameter is given to TRandom3::Poisson()
 		// the function will simply return zero
 		// fitter.remove_negative(response_spectrum);
 	} else{
-		reconstructor.addResponse(spectrum, inverse_n_simulated_particles, response_matrix, response_spectrum, response_spectrum_FEP);
+		reconstructor.addResponse(spectrum, inverse_n_simulated_particles, response_matrix, high_resolution_spectrum, response_spectrum_FEP);
+	}
+
+	/************ Blur experimental spectrum with finite resolution *************/
+
+	if(arguments.resolution_params.size() > 0){
+		cout << "> Blurring spectrum with detector response ..." << endl;
+		resolution.gaussianBlur(high_resolution_spectrum, arguments.resolution_params, response_spectrum);
+	} else{
+		for(Int_t i = 1; i <= (Int_t) NBINS / (Int_t) arguments.binning; ++i){
+			response_spectrum.SetBinContent(i, high_resolution_spectrum.GetBinContent(i));
+		}
 	}
 
 	/************ Plot results *************/
@@ -184,7 +203,13 @@ int main(int argc, char* argv[]){
 
 		c1.cd(2);
 		response_spectrum.SetLineColor(kBlack);
-		response_spectrum.Draw();
+		if(arguments.resolution_params.size() > 0){
+			high_resolution_spectrum.SetLineColor(kGray);
+			high_resolution_spectrum.Draw();
+			response_spectrum.Draw("same");
+		} else{
+			response_spectrum.Draw();
+		}
 	}
 
 	/************ Write results to file *************/
@@ -197,6 +222,8 @@ int main(int argc, char* argv[]){
 	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
 	spectrum.Write();
 	response_spectrum_FEP.Write();
+	if(arguments.resolution_params.size() > 0)
+		high_resolution_spectrum.Write();
 	response_spectrum.Write();
 
 	outputfile.Close();

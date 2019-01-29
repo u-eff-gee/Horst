@@ -33,7 +33,6 @@ public:
 	void addResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum);
 	void addResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum, TH1F &response_spectrum_FEP);
 
-	void addRealisticResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum);
 	void addRealisticResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum, TH1F &response_spectrum_FEP);
 
 private:

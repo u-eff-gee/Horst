@@ -22,7 +22,6 @@ add_executable(convert_to_txt src/HistogramToTxt.cpp)
 # Test executable
 add_executable(create_test_data src/create_test_data.cpp)
 target_link_libraries(create_test_data test_lib)
-target_link_libraries(create_test_data horst_lib)
 
 # Different compile options
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wconversion -Wsign-conversion")

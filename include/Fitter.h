@@ -28,7 +28,7 @@
 
 class Fitter{
 public:
-	Fitter(const TH2F &rema, const UInt_t binning, Int_t binstart, Int_t binstop):fitFunction("rema_fit", rema, binning, binstart, binstop), BINNING(binning), chi2(-1.){ fitf = new TF1("fitf", fitFunction, 0., (Double_t) NBINS-1, (Int_t) NBINS/ (Int_t) BINNING); };
+	Fitter(const TH2F &rema, const UInt_t binning, Int_t binstart, Int_t binstop):BINNING(binning), fitFunction("rema_fit", rema, binning, binstart, binstop), chi2(-1.){ fitf = new TF1("fitf", fitFunction, 0., (Double_t) NBINS-1., (Int_t) NBINS/ (Int_t) BINNING); };
 	~Fitter(){};
 
 	void topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t binstart, Int_t binstop);
@@ -42,8 +42,8 @@ public:
 private:
 	const UInt_t BINNING;
 	FitFunction fitFunction;
-	TF1 *fitf;
 	Double_t chi2;
+	TF1 *fitf;
 };
 
 #endif

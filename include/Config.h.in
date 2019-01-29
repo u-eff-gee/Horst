@@ -21,4 +21,14 @@
 const unsigned int NBINS = ${N_BINS};
 const unsigned int MC_UPDATE_INTERVAL = 10;
 
+// A finite detector resolution is modelled by a convolution of the
+// spectrum with a normal distribution with a potentially energy-
+// dependent width called RESOLUTION. That means each bin i of the resulting convoluted
+// spectrum will be a weighted sum over the bins j of the original
+// spectrum.
+// To save computation time, restrict the sum over the bins j, which
+// would actually run from 0 to NBINS-1 to the range 
+// [i-GAUSSIAN_BLUR_WINDOW*RESOLUTION, i+GAUSSIAN_BLUR_WINDOW*RESOLUTION]
+const double GAUSSIAN_BLUR_WINDOW = 3.;
+
 #endif 

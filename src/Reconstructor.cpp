@@ -71,27 +71,6 @@ void Reconstructor::addResponse(const TH1F &spectrum, const TH1F &inverse_n_simu
 	}
 }
 
-void Reconstructor::addRealisticResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum){
-
-	Double_t factor = 1.;
-	TRandom3 rand;
-
-	abort();
-
-	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
-		response_spectrum.SetBinContent(i, 0.);
-	}
-
-	for(Int_t i = 1; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
-		factor = spectrum.GetBinContent(i)*inverse_n_simulated_particles.GetBinContent(i);
-
-		for(Int_t j = i; j > 0; --j){
-			response_spectrum.SetBinContent(j, response_spectrum.GetBinContent(j) + (Double_t) rand.Poisson(factor*rema.GetBinContent(i, j)));
-		}
-	}
-
-}
-
 void Reconstructor::addRealisticResponse(const TH1F &spectrum, const TH1F &inverse_n_simulated_particles, const TH2F &rema, TH1F &response_spectrum, TH1F &response_spectrum_FEP){
 
 	Double_t factor = 1.;
