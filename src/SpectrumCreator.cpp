@@ -40,10 +40,12 @@ void SpectrumCreator::createSpectrum(TH1F &spectrum, const string option, const 
 
 	if(option == "bar"){
 		createBarSpectrum(spectrum, bar_params);
-		inputFileReader.createInputFile((UInt_t) (bar_params[1] - 1.5*bar_params[2]), (UInt_t) (bar_params[1] + 1.5*bar_params[2]), limitfilename.str());
+		vector<UInt_t> limits = {(UInt_t) (bar_params[1] - 1.5*bar_params[2]), (UInt_t) (bar_params[1] + 1.5*bar_params[2])};
+		inputFileReader.writeParameters(limits, limitfilename.str());
 	} else if(option == "normal"){
 		createNormalSpectrum(spectrum, normal_params);
-		inputFileReader.createInputFile((UInt_t) (normal_params[1] - 3.*normal_params[2]), (UInt_t) (normal_params[1] + 3.*normal_params[2]), limitfilename.str());
+		vector<UInt_t> limits = {(UInt_t) (bar_params[1] - 3.*bar_params[2]), (UInt_t) (bar_params[1] + 3.*bar_params[2])};
+		inputFileReader.writeParameters(limits, limitfilename.str());
 	} else{
 		cout << "Error: SpectrumCreator.cpp: createSpectrum(): Unknown option '" << option << "'. Aborting ..." << endl;
 		abort();
@@ -52,6 +54,10 @@ void SpectrumCreator::createSpectrum(TH1F &spectrum, const string option, const 
 	stringstream ofname;
 	ofname << outputfile_prefix << "_spectrum.root";
 	cout << "Writing test spectrum to '" << ofname.str() << "' ..." << endl;
+
+	stringstream resolutionfilename;
+	resolutionfilename << TEST_DIR << outputfile_prefix << "_resolution.txt";
+	inputFileReader.writeParameters(resolution_params, resolutionfilename.str());
 
 	TFile spectrumfile(ofname.str().c_str(), "RECREATE");
 	spectrum.Write();

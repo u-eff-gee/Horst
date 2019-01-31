@@ -22,11 +22,6 @@
 
 using ROOT::Math::normal_pdf;
 
-#include<iostream>
-
-using std::cout;
-using std::endl;
-
 void Resolution::gaussianBlur(const TH1F &spectrum, const vector<Double_t> params, TH1F &blurred_spectrum){
 
 	// Correction that is necessary because the integration does not use the full range

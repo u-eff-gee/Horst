@@ -21,7 +21,7 @@ add_executable(convert_to_txt src/HistogramToTxt.cpp)
 
 # Test executable
 add_executable(create_test_data src/create_test_data.cpp)
-target_link_libraries(create_test_data test_lib)
+target_link_libraries(create_test_data create_test_data_lib)
 
 # Different compile options
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wconversion -Wsign-conversion")
@@ -71,3 +71,6 @@ add_test(test_horst_bar_efficiency horst tsroh_bar_efficiency.root -m bar_effici
 add_test(test_normal_efficiency create_test_data normal efficiency normal_efficiency)
 add_test(test_tsroh_normal_efficiency tsroh normal_efficiency_spectrum.root -m normal_efficiency_response_matrix.root -b 1 -t spectrum -o tsroh_normal_efficiency.root)
 add_test(test_horst_normal_efficiency_mc horst tsroh_normal_efficiency.root -m normal_efficiency_response_matrix.root -b 10 -L test/normal_efficiency_limits.txt -t response_spectrum -o horst_normal_efficiency.root)
+
+add_test(test_tsroh_bar_escape_resolution tsroh bar_escape_spectrum.root -m bar_escape_response_matrix.root -b 1 -t spectrum -R test/bar_escape_resolution.txt -o tsroh_bar_escape_resolution.root)
+add_test(test_horst_bar_escape_resolution horst tsroh_bar_escape_resolution.root -m bar_escape_response_matrix.root -b 10 -L test/bar_escape_limits.txt -t response_spectrum -o horst_bar_escape_resolution.root)

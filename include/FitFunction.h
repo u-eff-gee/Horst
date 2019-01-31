@@ -29,8 +29,8 @@ class FitFunction{
 			bin_start(binstart),
 			bin_stop(binstop)
 	{
-		for(UInt_t i = 1; i <= rema.GetNbinsX(); ++i){
-			for(UInt_t j = 1; j <= rema.GetNbinsX(); ++j){
+		for(Int_t i = 1; i <= rema.GetNbinsX(); ++i){
+			for(Int_t j = 1; j <= rema.GetNbinsX(); ++j){
 				response_matrix.SetBinContent(i, j, rema.GetBinContent(i, j));
 			}
 		}
@@ -40,8 +40,8 @@ class FitFunction{
 		Double_t getSimulationStatisticalUncertainty(const Int_t bin, const TH1F &params);
 		Double_t getSpectrumStatisticalUncertainty(const Int_t bin, const TH1F &params, const TH1F &spectrum);
 		void setResponseMatrix(const TH2F &rema){
-			for(UInt_t i = 1; i <= rema.GetNbinsX(); ++i){
-				for(UInt_t j = 1; j <= rema.GetNbinsX(); ++j){
+			for(Int_t i = 1; i <= rema.GetNbinsX(); ++i){
+				for(Int_t j = 1; j <= rema.GetNbinsX(); ++j){
 					response_matrix.SetBinContent(i, j, rema.GetBinContent(i, j));
 				}
 			}

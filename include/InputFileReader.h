@@ -47,8 +47,14 @@ public:
 	
 	void readROOTSpectrum(TH1F &spectrum, const TString spectrumfile, const TString spectrumname);
 
-	void readHorstLimits(vector<unsigned int> &limits, const TString inputfilename);
-	void createInputFile(UInt_t left, UInt_t right, TString inputfilename) const;
+	void readDoubleParameters(vector<Double_t> &params, const TString inputfilename);
+	void readUnsignedIntParameters(vector<UInt_t> &params, const TString inputfilename);
+
+	// Having a template function that can process either a UInt_t or a Double_t
+	// would be nicer, but this caused the cmake linking to fail.
+	// For now, circumvented this problem by overloading InputFileReader::writeParameters()
+	void writeParameters(const vector<UInt_t> &params, TString outputfilename) const;
+	void writeParameters(const vector<Double_t> &params, const TString outputfilename) const ;
 
 private:
 	const UInt_t BINNING;

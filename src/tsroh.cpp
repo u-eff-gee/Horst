@@ -44,7 +44,10 @@ struct Arguments{
 	TString spectrumname = "";
 	TString matrixfile = "";
 	TString outputfile = "output.root";
-	vector<Double_t> resolution_params = {0., 0.};
+	TString resolution_file = "";
+	vector<Double_t> resolution_params;
+	Bool_t resolution_set = false;
+	Bool_t resolution_file_given = false;
 	Bool_t interactive_mode = false;
 	Bool_t statistics = false;
 	Bool_t tfile = false;
@@ -56,9 +59,10 @@ static char args_doc[] = "INPUTFILENAME";
 static struct argp_option options[] = {
 	{"binning", 'b', "BINNING", 0, "Rebinning factor for input histograms (default: 10)", 0},
 	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix", 0},
-	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
+	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file (default: 'output.root')", 0},
 	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
-	{"resolution", 'r', "RESOLUTION", 0, "Set detector resolution in units of bins (default: 0)", 0},
+	{"resolution", 'r', "RESOLUTION", 0, "Set detector resolution (default: 0)", 0},
+	{"resolution_file", 'R', "RESOLUTIONFILE", 0, "Read whitespace-separated detector resolution parameters from file", 0},
 	{"statistics", 's', 0, 0, "Add statistical fluctuations to response (switched off by default)", 0},
 	{"tfile", 't', "SPECTRUM", 0, "Select SPECTRUM from a ROOT file called INPUTFILENAME, instead of a text file."
 	" Spectrum must be an object of TH1F.", 0},
@@ -74,8 +78,12 @@ static int parse_opt(int key, char *arg, struct argp_state *state){
 		case 'm': arguments->matrixfile= arg; break;
 		case 'o': arguments->outputfile = arg; break;
 		case 'i': arguments->interactive_mode= true; break;
-		case 'r': arguments->resolution_params[0] = atof(arg); 
-			  arguments->resolution_params[1] = 0.;
+		case 'r': arguments->resolution_params.push_back(atof(arg));
+			  arguments->resolution_set = true;
+			  break;
+		case 'R': arguments->resolution_file = arg;
+			  arguments->resolution_set = true;
+			  arguments->resolution_file_given = true;
 			  break;
 		case 's': arguments->statistics= true; break;
 		case 't': arguments->tfile = true; arguments->spectrumname = arg; break;
@@ -161,7 +169,13 @@ int main(int argc, char* argv[]){
 	for(Int_t i = 0; i <= (Int_t) NBINS/(Int_t) arguments.binning; ++i)
 		inverse_n_simulated_particles.SetBinContent(i, 1./n_simulated_particles.GetBinContent(i));
 
-	Fitter fitter(response_matrix, arguments.binning,0., (Double_t) (NBINS - 1));
+	Fitter fitter(response_matrix, arguments.binning, 0, NBINS - 1);
+
+	/************ Read resolution parameters from file  *************/
+
+	if(arguments.resolution_file_given){
+		inputFileReader.readDoubleParameters(arguments.resolution_params, arguments.resolution_file);
+	}
 
 	/************ Add response to experimental spectrum *************/
 
@@ -178,7 +192,7 @@ int main(int argc, char* argv[]){
 
 	/************ Blur experimental spectrum with finite resolution *************/
 
-	if(arguments.resolution_params.size() > 0){
+	if(arguments.resolution_set){
 		cout << "> Blurring spectrum with detector response ..." << endl;
 		resolution.gaussianBlur(high_resolution_spectrum, arguments.resolution_params, response_spectrum);
 	} else{
@@ -203,11 +217,12 @@ int main(int argc, char* argv[]){
 
 		c1.cd(2);
 		response_spectrum.SetLineColor(kBlack);
-		if(arguments.resolution_params.size() > 0){
+		if(arguments.resolution_set){
 			high_resolution_spectrum.SetLineColor(kGray);
 			high_resolution_spectrum.Draw();
 			response_spectrum.Draw("same");
 		} else{
+			cout << "Drawing spectrum" << endl;
 			response_spectrum.Draw();
 		}
 	}
@@ -222,7 +237,7 @@ int main(int argc, char* argv[]){
 	TFile outputfile(outputfilename.str().c_str(), "RECREATE");
 	spectrum.Write();
 	response_spectrum_FEP.Write();
-	if(arguments.resolution_params.size() > 0)
+	if(arguments.resolution_set)
 		high_resolution_spectrum.Write();
 	response_spectrum.Write();
 

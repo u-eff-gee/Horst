@@ -138,7 +138,7 @@ int main(int argc, char* argv[]){
 	InputFileReader inputFileReader(arguments.binning);
 	if(arguments.limits_from_file){
 		vector<UInt_t> limits;
-		inputFileReader.readHorstLimits(limits, arguments.limitfile);
+		inputFileReader.readUnsignedIntParameters(limits, arguments.limitfile);
 		arguments.left = limits[0];
 		arguments.right = limits[1];
 	}
