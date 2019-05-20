@@ -53,6 +53,8 @@ target_link_libraries(create_test_data ${ROOT_LIBRARIES})
 
 # Installing
 install(TARGETS horst tsroh makematrix convert_to_txt DESTINATION bin)
+message(STATUS "Creating directory ${PROJECT_BINARY_DIR}/test for test output")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/test")
 
 # Testing
 include(CTest)

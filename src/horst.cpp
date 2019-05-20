@@ -46,13 +46,13 @@ struct Arguments{
 	TString spectrumfile = "";
 	TString spectrumname = "";
 	TString matrixfile = "";
-	UInt_t uncertainty_mc = 1;
+	UInt_t uncertainty_mc = 10;
 	UInt_t seed = 1;
 	Bool_t use_mc = false;
 	Bool_t use_mc_fast = false;
 	Bool_t write_mc = false;
 	Bool_t write_mc_only = false;
-	TString correlation_matrix_filename = "correlation_matrix.txt";
+	TString correlation_matrix_filename = "";
 	TString outputfile = "output.root";
 	UInt_t left = 0;
 	UInt_t right = NBINS;
@@ -69,21 +69,21 @@ static char args_doc[] = "INPUTFILENAME";
 
 static struct argp_option options[] = {
 	{"binning", 'b', "BINNING", 0, "a) Without '-t' option: Rebinning factor for input spectrum and response matrix (default: 10)\nb) With '-t' option   : Rebinning factor for response matrix (default: 10)", 0},
-	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix", 0},
+	{"matrixfile", 'm', "MATRIXFILENAME", 0, "Name of file that contains the response matrix (default: none, i.e. this option must be set by the user)", 0},
 	{"uncertainty_mc", 'u', "NRANDOM", 0, "Determine uncertainty using a Monte-Carlo (MC) method to include correlations. NRANDOM is the number of MC iterations (default: 10).", 0},
-	{"uncertainty_mc_fast", 'U', "NRANDOM", 0, "Similar to '-u' option, but do not vary the response matrix when estimating the statistical uncertainty. This option can be used to disentangle the statistical uncertainty introduced by the input spectrum and the response matrix. Overrides the '-u' option if both are set.", 0},
-	{"write_mc", 'w', 0, 0, "Write MC-generated spectra and reconstructed spectra. This option is ignored if '-u' option is not used.", 0},
-	{"write_mc_only", 'W', 0, 0, "Similar to '-w' option, but does not evaluate MC results afterwards (i.e. leaves calculation of mean value and uncertainties to the user). The advantage compared to the '-w' option is that horst does not have to keep all MC spectra in memory until the end of the program execution, potentially saving a lot of RAM. MC spectra are dumped to file immediately.", 0},
-	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file", 0},
-	{"left", 'l', "LEFT", 0, "Left limit of fit range", 0},
-	{"right", 'r', "RIGHT", 0, "Right limit of fit range", 0},
-	{"limit_file", 'L', "LIMITFILE", 0, "Read whitespace-separated limits from a single-line file", 0},
-	{"interactive_mode", 'i', 0, 0, "Interactive mode (show results in ROOT application, switched off by default)", 0},
+	{"uncertainty_mc_fast", 'U', "NRANDOM", 0, "Similar to '-u' option, but do not vary the response matrix when estimating the statistical uncertainty. This option can be used to disentangle the statistical uncertainty introduced by the input spectrum and the response matrix. Overrides the '-u' option if both are set. NRANDOM is the number of MC iterations (default: 10).", 0},
+	{"write_mc", 'w', 0, 0, "Write MC-generated spectra and reconstructed spectra. This option is ignored if '-u' option is not used. (default: false)", 0},
+	{"write_mc_only", 'W', 0, 0, "Similar to '-w' option, but does not evaluate MC results afterwards (i.e. leaves calculation of mean value and uncertainties to the user). The advantage compared to the '-w' option is that horst does not have to keep all MC spectra in memory until the end of the program execution, potentially saving a lot of RAM. MC spectra are dumped to file immediately. (default: false)", 0},
+	{"outputfile", 'o', "OUTPUTFILENAME", 0, "Name of output file (default: output.root).", 0},
+	{"left", 'l', "LEFT", 0, "Left limit of fit range (default: 0).", 0},
+	{"right", 'r', "RIGHT", 0, "Right limit of fit range (default: NBINS)", 0},
+	{"limit_file", 'L', "LIMITFILE", 0, "Read whitespace-separated limits from a single-line file (default: none, i.e. do not read limits from a file).", 0},
+	{"interactive_mode", 'i', 0, 0, "Interactive mode: show results in ROOT application (default: false).", 0},
 	{"tfile", 't', "SPECTRUM", 0, "Select SPECTRUM from a ROOT file called INPUTFILENAME, instead of a text file."
-	" Spectrum must be an object of TH1F.", 0},
-	{"correlation", 'c', "CORRELATIONFILENAME", 0, "Write the correlation matrix of the fit to the specified output file. If the '-u' option is used, only one correlation matrix will be written, although NRANDOM fits are executed.", 0},
-	{"seed", 's', "SEED", 0, "Set the random number seed (default: 1)", 0},
-	{"verbose", 'v', 0, 0, "Enable ROOT to print verbose information about the fitting process", 0},
+	" Spectrum must be an object of TH1F. (default: none, i.e. don't read from ROOT file)", 0},
+	{"correlation", 'c', "CORRELATIONFILENAME", 0, "Write the correlation matrix of the fit to the specified output file. If the '-u' option is used, only one correlation matrix will be written, although NRANDOM fits are executed. (default: none, i.e. do not write write correlation file)", 0},
+	{"seed", 's', "SEED", 0, "Set the random number seed (default: 1. This ensures that a call of Horst with the same arguments gives the same results.)", 0},
+	{"verbose", 'v', 0, 0, "Enable ROOT to print verbose information about the fitting process (default: false)", 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
 

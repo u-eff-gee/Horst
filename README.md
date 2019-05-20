@@ -52,13 +52,21 @@ $ mkdir horst-build
 $ cd horst-build/
 $ cmake HORST_SOURCE_DIR
 ```
+
 The procedure above is the default build. To change the build type (`RELEASE`, `DEBUG` and `RELEASEWITHDEBUGINFO` are supported) or change the installation directory, use the `-DCMAKE_BUILD_TYPE` and `-DCMAKE_INSTALL_PREFIX` build variables, for example:
 
 ```
 $ cmake -DCMAKE_BUILD_TYPE=DEBUG -DCMAKE_INSTALL_PREFIX=/opt/ HORST_SOURCE_DIR
 ```
 
-After that compile and install the code in the build directory by executing
+To change the maximum number of bins `NBINS` of the input spectra and matrices, set the variable `N_BINS` to a different value:
+
+```
+$ cmake -DN_BINS=NBINS
+```
+
+The default value is 12000. This value should match the number of bins of the response matrix to ensure correct reading. Furthermore, it influences the performance of the tests, since the test parameters are all defined relative to `NBINS`. Note that this option is different from the  `-b` command-line option (see also [4 Usage](#usage)).
+After that, compile and install the code in the build directory by executing
 
 ```
 $ make
@@ -86,11 +94,11 @@ make test
 in the build directory. This will run `horst` with selected examples, trying to use all of its functionality. The tests will report on their success or failure and create the usual `horst` output.
 Note that successful tests only mean that the code runs without runtime errors. **They do not guarantee that the physics is correct!** In order to check the physics, compare the output:
 Each test starts by creating an artificial spectrum and response matrix. After that, `tsroh` is used to distort the spectrum with a detector response. At the end, `horst` is used to recreate the original spectrum. Compare the input/output of all three steps to see whether, and if, how well, the spectrum reconstruction works.
-User-defined artificial response functions and spectra can be hard-coded as member functions of the corresponding classes `SpectrumCreator` and `ResponseMatrixCreator`. 
+User-defined artificial response functions and spectra can be hard-coded as member functions of the corresponding classes `SpectrumCreator` and `ResponseMatrixCreator`.
 
 ### 3.2 Documentation <a name="documentation"></a>
 
-`Horst` includes a documentation file, which describes the basics of how the reconstruction procedure is implemented and what assumptions go into it. It also includes detailed descriptions of the command-line options and the output file. It can be built by going to the `doc/` directory and executing `make`: 
+`Horst` includes a documentation file, which describes the basics of how the reconstruction procedure is implemented and what assumptions go into it. It also includes detailed descriptions of the command-line options and the output file. It can be built by going to the `doc/` directory and executing `make`:
 
 ```
 $ cd horst/doc/
@@ -112,8 +120,6 @@ In order to use `Horst`, two things are needed (the files can have arbitrary nam
 
 The spectrum and the response matrix need to have the same binning (example: 1 bin corresponds to an energy range of 1 keV). During runtime, they can be rebinned simultaneously with the factor given by the `-b` command line option. For the reconstruction procedure, rebinning is an important measure to reduce the computing time which depends approximately exponentially on the number of bins.
 The rebinning factor `BINNING` (`BINNING`==1 means no rebinning, `BINNING` = 2 means two bins are merged into one ...) can be set via the `-b BINNING` command-line option. By default, `BINNING` == 10 is used in `Horst`.
-
-Just to mention it: The integer number of bins `NBINS` of the `NBINSxNBINS` matrix is hard-coded in `Horst/include/Config.h`, which will communicate the values to `Horst` and the auxiliary programs. After changing anything in `Config.h`, do not forget to `make` the code again.
 
 The most simple usage of `Horst` is:
 
