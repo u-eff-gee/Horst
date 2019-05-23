@@ -209,16 +209,17 @@ $ makematrix input.txt -n HISTNAME -o MATRIXFILE -u old_input.txt
 This convenience script converts all the TH1F histograms in an output file `OUTPUTFILE` to text files by typing:
 
 ```
-$ convert_to_txt output.root
+$ convert_to_txt OUTPUTFILE BINNING
 ```
 
-The text file names will be the name of the histogram plus the name of the ROOT file (without ".root") and a suffix. For each histogram, there will be a two-column (energy vs. counts) file and a single-column file (only counts). For the single-column files, a calibration file will be created that contains the parameters for a linear energy calibration `ENERGY = a + b*BIN` in the format
+Here, `BINNING` is the binning factor of the histogram introduced in [4.1 Horst](#usage_horst). The text file names will be the name of the histogram plus the name of the ROOT file (without ".root") and a suffix. For each histogram, there will be a two-column (energy vs. counts) file and a single-column file (only counts). For the single-column files, a calibration file will be created that contains the parameters for a linear energy calibration `ENERGY = a + b*BIN` in the format
 
 ```
 spectrum1.tv: a1 b1
 spectrum2.tv: a2 b2
 ...
 ```
+This is why the binning factor is needed.
 
 ## 5 Output <a name="output"></a>
 
