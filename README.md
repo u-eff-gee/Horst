@@ -219,7 +219,7 @@ spectrum1.tv: a1 b1
 spectrum2.tv: a2 b2
 ...
 ```
-This is why the binning factor is needed.
+This is why the binning factor is needed. Note that this scipt is also influenced by the `N_BINS` build variable (see [3 Installation](installation)).
 
 ## 5 Output <a name="output"></a>
 
