@@ -51,12 +51,14 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 
 	fitFunction.setResponseMatrix(rema);
 
+	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
+
 	for(Int_t i = 0; i <= start_params.GetNbinsX(); ++i){
 		if(i < binstart || i >= binstop){
 			fitf->FixParameter(i, 0.);
 		} else{
 			fitf->SetParameter(i, start_params.GetBinContent(i));
-			fitf->SetParLimits(i, 0., spectrum.GetBinContent(i));
+			fitf->SetParLimits(i, 0., fit_upper_limit);
 		}
 	}
 
@@ -89,12 +91,14 @@ void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1
 
 	fitFunction.setResponseMatrix(rema);
 
+	Double_t fit_upper_limit = 10.*start_params.GetMaximum();
+
 	for(Int_t i = 0; i <= start_params.GetNbinsX(); ++i){
 		if(i < binstart || i >= binstop){
 			fitf->FixParameter(i, 0.);
 		} else{
 			fitf->SetParameter(i, start_params.GetBinContent(i));
-			fitf->SetParLimits(i, 0., spectrum.GetBinContent(i));
+			fitf->SetParLimits(i, 0., fit_upper_limit);
 		}
 
 	}
