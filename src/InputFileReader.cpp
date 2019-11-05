@@ -252,6 +252,30 @@ void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile
 	inputFile->Close();
 }
 
+const std::string WHITESPACE = " \n\r\t\f\v";
+
+std::string ltrim(const std::string& s) {
+    size_t start = s.find_first_not_of(WHITESPACE);
+    if (start == std::string::npos) {
+        return "";
+    } else {
+        return s.substr(start);
+    }
+}
+
+std::string rtrim(const std::string& s) {
+    size_t end = s.find_last_not_of(WHITESPACE);
+    if (end == std::string::npos) {
+        return "";
+    } else {
+        return s.substr(0, end + 1);
+    }
+}
+
+std::string trim(const std::string& s) {
+    return rtrim(ltrim(s));
+}
+
 void InputFileReader::readTxtSpectrum(TH1F &spectrum, const TString spectrumfile){
 	
 	ifstream file;	
@@ -261,6 +285,8 @@ void InputFileReader::readTxtSpectrum(TH1F &spectrum, const TString spectrumfile
 
 	if(file.is_open()){
 		while(getline(file, line)){
+			if (trim(line).length() == 0 || trim(line).at(0) == '#') // Ignore empty lines or comments
+		        continue;
 			spectrum.SetBinContent(index, atof(line.c_str()));
 			++index;
 		}
