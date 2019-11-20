@@ -82,9 +82,17 @@ int main(int argc, char* argv[]){
 	vector<Double_t> old_energies;
 	vector<Double_t> old_n_simulated_particles;
 
-	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
-	TH2F old_response_matrix("old_rema", "Response_Matrix", NBINS, 0., (Double_t) (NBINS - 1), NBINS, 0., (Double_t) (NBINS - 1));
-	TH1F n_particles("n_simulated_particles", "Initial simulated particles", NBINS, 0., (Double_t) (NBINS - 1));
+	// Best approach would be to copy the energy calibration (i.e. first bin center and bin width) of the supplied response 
+	// spectra (just take the first one for example assuming that all are equal, otherwise it would be havoc anyway) to the
+	// response matrix. I.e. in TH2F constructor use xlow=ylow=hist->GetBinLowEdge(1) 
+	// and xup=yup=hist->GetBinLowEdge(1)+hist->GetBinWidth(0)*NBINS with hist being a response spectrum.
+	// Or let the user set this via a CMake switch or command line option.
+	// Ideally, the energy calibration should be equal for all histograms (the user has to guarantee that input matrix and 
+	// spectrum are binned equally), while for HORST the energy calibration does not matter (only bin numbers are relevant)
+	// this produces nicer (i.e. energy calibrated) output.
+	TH2F response_matrix("rema", "Response_Matrix", NBINS, 0., (Double_t) NBINS, NBINS, 0., (Double_t) NBINS);
+	TH2F old_response_matrix("old_rema", "Response_Matrix", NBINS, 0., (Double_t) NBINS, NBINS, 0., (Double_t) NBINS);
+	TH1F n_particles("n_simulated_particles", "Initial simulated particles", NBINS, 0., (Double_t) NBINS);
 
 	InputFileReader inputFileReader(1);
 

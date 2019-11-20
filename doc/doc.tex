@@ -17,17 +17,18 @@
 \section{Introduction}
 This document describes briefly how the reconstruction of original spectra can be done and how it is implemented in \textbf{Horst}.
 
-\section{Continous spectrum}
-First, treat the particle spectrum $s(E)$ as a continous function of the energy $E$. 
+\section{Continuous spectrum}
+First, treat the particle spectrum $s(E)$ as a continuous function of the energy $E$. 
 The detected spectrum will be denoted as $\tilde{s}(E)$.
 
-The content of the detected spectrum at an energy $E$ is related to the original spectrum by a convolution with the detector response function $r(E, E')$:
+The content of the detected spectrum at an energy $E$ is related to the original spectrum by a continuous superposition with the detector response function $r(E, E')$:
 
 \begin{equation}
 \label{convolution_continuous}
 	\tilde{s}(E) = \int r(E, E') \cdot s(E') \mathrm{d}E' 
 \end{equation}
 
+This continuous superposition is often also referred to as the convolution with the detector response due to the similarity of both operations, although the mathematical definition of the convolution differs.
 The two arguments of $r$ mean that, in principle, any energy of the detected spectrum can be influenced by any energy of the original spectrum.
 The diagonal elements $r(E,E)$ are commonly referred to as the detection efficiency, or the full-energy peak (FEP) efficiency.
 For a detector with negligible noise and pileup, 
@@ -40,7 +41,7 @@ For a detector with negligible noise and pileup,
 i.e. a detector will, at maximum, detect the full energy of a particle, and not more. This is also assumed in the code.
 
 \section{Histograms}
-In reality, one almost never measures continous spectra, but they will be binned in some way.
+In reality, one almost never measures continuous spectra, but they will be binned in some way.
 Denoting all quantities with square brackets instead of braces, and variables with an index in order to indicates discrete values, Eq. (\ref{convolution_continuous}) becomes:
 
 \begin{equation}
@@ -50,12 +51,9 @@ Denoting all quantities with square brackets instead of braces, and variables wi
 
 The convolution of the response function on the spectrum has now become the action of an $N \times N$ matrix on a vector with $N$ entries:
 
-\begin{equation}
+\begin{align}
 	\label{matrix_equation_general}
-	\tilde{s} = r \cdot s = 
-\end{equation}
-
-\begin{equation}
+	\tilde{s} &= r \cdot s = \\
 	\label{matrix_equation_explicit}
 	\left[ 
 		\begin{array}{c}
@@ -65,11 +63,11 @@ The convolution of the response function on the spectrum has now become the acti
 			\tilde{s}[N] \\
 		\end{array}
 	\right]
-	= 
+	&= 
 	\begin{bmatrix}
 		r[0][0] & r[0][1] & \hdots & r[0][N] \\
-		r[1][0] & r[0][1] & \vdots & r[1][N] \\
-		\vdots  & \vdots  & \vdots & \vdots  \\
+		r[1][0] & r[1][1] & \hdots & r[1][N] \\
+		\vdots  & \vdots  & \ddots & \vdots  \\
 		r[N][0] & r[N][1] & \hdots & r[N][N] \\
 	\end{bmatrix}
 	\cdot
@@ -81,7 +79,7 @@ The convolution of the response function on the spectrum has now become the acti
 			s[N] \\
 		\end{array}
 	\right]
-\end{equation}
+\end{align}
 
 Each column $r[][i]$ of the the matrix is multiplied by a single entry of the original spectrum. This means that it represents the response of the detector to monoenergetic particles with the energy $E_i$.
 Each row $r[i][]$ shows the magnitude of the correlation of this bin with all others.
@@ -102,11 +100,11 @@ Note that, in a real detection experiment, there is the influence of counting st
 	\tilde{s} + \epsilon \approx r \cdot s
 \end{equation}
 
-Admitting statistical fluctiations, the equality of the two parts of the equation does not hold any more.
+Admitting statistical fluctuations, the equality of the two parts of the equation does not hold any more.
 However, equality will be assumed in the following, i.e. it is assumed that statistics are high enough so that the fluctuations do not matter too much.
 This would mean that Eq. (\ref{matrix_equation_general}) can still be solved by inversion.
 
-However, the brute-force solution by inversion can be greatly simplified by applying Eq. (\ref{response_condition}) in discretized form. 
+The straightforward solution by inversion can be greatly simplified by applying Eq. (\ref{response_condition}) in discretized form. 
 Then, the matrix in Eq. (\ref{matrix_equation_general}) becomes an upper triangular matrix:
 
 \begin{equation}
@@ -122,9 +120,9 @@ Then, the matrix in Eq. (\ref{matrix_equation_general}) becomes an upper triangu
 	= 
 	\begin{bmatrix}
 		r[0][0] & r[0][1] & \hdots & r[0][N] \\
-		0       & r[1][1] & \vdots & r[1][N] \\
-		\vdots  & \ddots  & \ddots & \vdots  \\
-		0       & 0       & \ddots & r[N][N] \\
+		0       & r[1][1] & \hdots & r[1][N] \\
+		\vdots  & \vdots  & \ddots & \vdots  \\
+		0       & 0       & \hdots & r[N][N] \\
 	\end{bmatrix}
 	\cdot
 	\left[ 
@@ -145,8 +143,8 @@ Its starting steps are:
 
 \begin{enumerate}
 	\item{Starting at the lower right edge of the matrix (highest energy), solve the trivial equation $\tilde{s}[N] = r[N][N] \cdot s[N]$ to scale the full-energy peak of the response function to the detected spectrum. 
-		The scaling factor $r[N][N]/\tilde{s}[N]$ is the content of bin $N$ in the original spectrum.}
-	\item{Multiply the corresponding column $N$ of the response matrix with the factor and subtract it on both sides of the equation. The highest energy bin of $s$ is now a zero, i.e. the outermost column $r[][N]$ does not matter any more, as well as the lowest row $r[N][]$.}
+		The scaling factor $s[N]=\tilde{s}[N]/r[N][N]$ is the content of bin $N$ in the original spectrum.}
+	\item{Multiply the corresponding column $N$ of the response matrix with the factor (the solution for $s[N]$) and subtract this vector on both sides of the equation (to elliminate $s[N]$ from the equation system). In the new, resulting equation system (part of the spectrum still to be unfolded) the highest energy bin of $s$ is now a zero, i.e. the outermost column $r[][N]$ does not matter any more, as well as the lowest row $r[N][]$.}
 	\item{Proceed with the equation in row $N-1$ as in the first step, because this one has now become trivial.}
 	\item{...}
 \end{enumerate}
@@ -160,7 +158,7 @@ This can be overcome by imposing the condition
 \end{equation}
 
 which turns the matrix inversion into a minimization problem that can be solved, for example, by applying a least-squares algorithm.
-With a perfect response simulation and no statistical fluctiations, the TopDown algorithm and the fit should yield the same results.
+With a perfect response simulation and no statistical fluctuations, the TopDown algorithm and the fit should yield the same results.
 Assuming that the influence of both effects is not too strong, \textbf{Horst} uses both algorithms: 
 
 First, it solves the problem using the TopDown algorithm. After that, it uses the obtained parameters $s[i]$ as start parameters for a least-squares fit, setting all negative parameters to zero and imposing Eq. (\ref{no_zeros}).
@@ -187,9 +185,9 @@ Using the simulated response function, Eq. (\ref{matrix_equation_triangle_explic
 	= 
 	\begin{bmatrix}
 		r_{sim}[0][0] & r_{sim}[0][1] & \hdots & r_{sim}[0][N] \\
-		0       & r_{sim}[1][1] & \vdots & r_{sim}[1][N] \\
-		\vdots  & \ddots  & \ddots & \vdots  \\
-		0       & 0       & \ddots & r_{sim}[N][N] \\
+		0       & r_{sim}[1][1] & \hdots & r_{sim}[1][N] \\
+		\vdots  & \vdots  & \ddots & \vdots  \\
+		0       & 0       & \hdots & r_{sim}[N][N] \\
 	\end{bmatrix}
 	\cdot
 	\left[ 
@@ -210,57 +208,42 @@ In Eq. (\ref{matrix_equation_triangle_simulated}), $p$ is the vector of fit para
 %
 State of the art Monte-Carlo (MC) simulations of the detector response require a lot of computing power because one would like to keep the statistical uncertainty small, which is introduced by them (see also Sec. \ref{Uncertainty}).
 They are commonly used for applications where the interaction of particles with matter is of interest, therefore we will restrict the following discussion to MC-simulated response functions and consider that they may have a significant statistical uncertainty.
-Often, simulating all the energy bins $E_i$ of a detected spectrum would take a lot of time, whereas the dependence of the response on the energy may be very weak.
+Often, simulating the detector response for all relevant particle energies $E_j$ would take a lot of time, whereas the relative dependence of the response on the particle energy may be very weak.
 If, for a sufficiently small step in energy,
 %
 \begin{equation}
 \label{weak_energy_dependence}
-r[E_i \pm \Delta_E][E_j] \approx r[E_i][E_j]
+r[E_i][E_j] \approx r[E_i \pm \Delta E][E_j \pm \Delta E]
 \end{equation}
 %
-holds, a simulation for a particular energy $E_i$ can be used for a whole energy region $\left[ E_i - \Delta E, E_i + \Delta E \right]$.
-For example if the response of a detector to the energies $E_0$ and $E_1$ is approximately the same, Eq. (\ref{matrix_equation_triangle_simulated}) can be modified by re-using the first row:
+holds, a simulation for a particular energy $E_j$ can be used for a whole energy region $\left[ E_j - \Delta E, E_j + \Delta E \right]$.
+For example if the response of a detector to the energies $E_N$ and $E_{N-1}$ is approximately the same (besides the obvious energy shift of the spectrum), Eq. (\ref{matrix_equation_triangle_simulated}) can be modified by re-using the last row shifted:
 %
 \begin{equation}
 	\label{matrix_equation_triangle_approximation}
-	\left[ 
-		\begin{array}{c}
-			\tilde{s}[0] \\
-			\tilde{s}[1] \\
-			\vdots	\\
-			\tilde{s}[N] \\
-		\end{array}
-	\right]
-	= 
+	r_{sim} \approx 
 	\begin{bmatrix}
-		r_{sim}[0][0] & r_{sim}[0][1] & \hdots & r_{sim}[0][N] \\
-		0       & r_{sim}[0][1] & \vdots & r_{sim}[0][N] \\
-		\vdots  & \ddots  & \ddots & \vdots  \\
-		0       & 0       & \ddots & r_{sim}[N][N] \\
+		r_{sim}[0][0] & r_{sim}[0][1] & \hdots & r_{sim}[1][N] & r_{sim}[0][N]   \\
+		0             & r_{sim}[1][1] & \hdots & r_{sim}[2][N] & r_{sim}[1][N]   \\
+		\vdots        & \vdots        & \ddots & \vdots        & \vdots          \\
+		%0             & 0             & \hdots & r_{sim}[N-1][N] & r_{sim}[N-2][N] \\
+		0             & 0             & \hdots & r_{sim}[N][N] & r_{sim}[N-1][N] \\
+		0             & 0             & \hdots & 0             & r_{sim}[N][N]   \\
 	\end{bmatrix}
-	\cdot
-	\left[ 
-		\begin{array}{c}
-			p[0] \\
-			p[1] \\
-			\vdots	\\
-			p[N] \\
-		\end{array}
-	\right]
 \end{equation}
 %
-If \textbf{Horst} is given a set of simulations whose energy steps are too coarse for the desired resolution, it will apply Eq. (\ref{weak_energy_dependence}) as well and take the closes simulated energy for each bin of the spectrum.
-This choice is not done during runtime, but already when the response matrix is built up from simulated responses.
+If \textbf{Horst} (actually MakeMatrix) is given a set of simulations whose energy steps are too coarse for the desired resolution, it will apply Eq. (\ref{weak_energy_dependence}) as well and take the closest simulated energy for each bin of the spectrum.
+This choice is not done during runtime, but already when the response matrix is built up from simulated responses (by MakeMatrix).
 
 \textit{(Now, one might ask the question: If so many preparatory steps are taken when assembling the response matrix, then why not divide by the factor $N_\mathrm{sim}$ as well to get $s$ directly from the fitting process?
-The reason is that one still needs to know the statistical fluctuations $\Delta r_\mathrm{sim}[i][j]$ of the entries of $r_\mathrm{sim}$, which can be calculated as $\sqrt{ \Delta r[i][j] }$.).}
+The reason is that one still needs to know the statistical fluctuations $\Delta r_\mathrm{sim}[i][j]$ of the entries of $r_\mathrm{sim}$, which can be calculated as $\sqrt{r_\mathrm{sim}[i][j] }$.).}
 
 
 \section{Uncertainty}
 \label{Uncertainty}
 
 The uncertainty of the reconstruction procedure is also taken into account by \textbf{Horst}.
-There are three sources of uncertainy in the process described above:
+There are three sources of uncertainty in the process described above:
 
 \begin{enumerate}
 	\item The statistical uncertainty of the detected spectrum $\Delta \tilde{s}[i]$
@@ -289,16 +272,24 @@ The statistical uncertainties of single bins / matrix elements can be estimated 
 	\Delta r [i][j] = \sqrt{ r[i][j] }
 \end{equation}
 %
-In a first approximation, they can be included using Gaussian propagation of uncertainties, which means that they would not correlated.
+In a first approximation, they can be included using Gaussian propagation of uncertainties, which means that they would not be correlated.
 Consider first the TopDown algorithm again, which yields a unique result.
 In this case, $s[i]$ is given by:
 %
+% TODO: This seems to be nonsense:
+% The solution s[i] is defined by using the solution q[j]=s[j] in a sum with i=j...
+% The formula has a false form too: It should be 
+% $s[i] = \frac{\tilde{s}[i]}{r_{sim}[i][i]} - \sum_{j > i} \frac{r_{sim}[i][j]}{r_{sim}[i][i]} \cdot s[j]$
+% so highly recursive (due to the ellimination algorithm subtracting all previous solutions, which in turn also contain their previous solutions)
+% Hence the given uncertainty calculation seems also off ignoring the uncertainties in the previous solutions
+%
+
 \begin{equation}
-	\label{topdown_uncertainty}
+	\label{topdown_solution}
 	s[i] = \sum_{j \geq i} r_{sim}[i][j] \cdot q[j] \cdot \tilde{s}[j]
 \end{equation}
 %
-In Eq. (\ref{topdown_uncertainty}), the parameters $q[j]$ are determined by the solution of Eq. (\ref{matrix_equation_triangle_explicit}) and assumed to be exact.
+In Eq. (\ref{topdown_solution}), the parameters $q[j]$ are determined by the solution of Eq. (\ref{matrix_equation_triangle_explicit}) and assumed to be exact.
 Then, the uncertainty $\Delta s[i]$ is given by
 %
 \begin{equation}
@@ -310,7 +301,7 @@ using $\Delta r[i][j]$ and $\Delta \tilde{s} [i]$ from Eq. (\ref{simulation_unce
 If the uncertainty of the parameters $q$ are known, they can also be included by introducing $\Delta q[i]$, which creates a new term in the square-root of Eq. (\ref{topdown_uncertainty}).
 This is used by \textbf{Horst} as an approximation of the uncertainty of the reconstruction procedure.
 
-However, if the parameters are strongly calculated, which is easily possible if the matrix elements are of similar magnitude, then this approach may be false in either direction, depending on whether the correlations are destructive or constructive.
+However, if the parameters are strongly correlated, which is easily possible if the matrix elements are of similar magnitude, then this approach may be false in either direction, depending on whether the correlations are destructive or constructive.
 The most straightforward way to incorporate such correlations is to use Monte-Carlo propagation of uncertainty.
 This method assumes that the input parameters (here: $\tilde{s}$, $r$ and $q$) follow a probability distribution which is known or can be estimated.
 The final result (here: $s$) is obtained from these input parameters by algebraic manipulations (here: the product of a matrix with a vector).

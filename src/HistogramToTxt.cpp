@@ -57,7 +57,7 @@ void convertDirectory(TDirectory* f, TString filename,
 	
 		hist = (TH1*) f->Get(histogramname);
 
-		for(Int_t j = 0; j <= (Int_t) NBINS/ (Int_t) BINNING; j++){
+		for(Int_t j = 1; j <= (Int_t) NBINS/ (Int_t) BINNING; j++){ // Remember: 0th bin is underflow bin
 			of << hist->GetBinCenter(j) << "\t" << hist->GetBinContent(j) << endl;
 		}
 
@@ -71,18 +71,18 @@ void convertDirectory(TDirectory* f, TString filename,
 	
 		hist = (TH1*) f->Get(histogramname);
 
-		for(Int_t j = 0; j <= (Int_t) NBINS/ (Int_t) BINNING; j++){
+		for(Int_t j = 1; j <= (Int_t) NBINS/ (Int_t) BINNING; j++){ // Remember: 0th bin is underflow bin
 			of << hist->GetBinContent(j) << endl;
 		}
 
 		of.close();
 		cout << "Output file " << outputfilename.str() << " created." << endl;
 
-		if(i == 0) {
-		} else {
         of.open(calibrationfilename, std::ios_base::app);
-		}
-		of << outputfilename.str() << ":\t" << 0. << "\t" << BINNING << endl;
+		// If a HDTV-style histogram (first bin centered at 0) was read as root-style histogram (first bin's lower edge at 0),
+		// then rebinned in the root convetion and should then be read in HDTV-style again,
+		// the calibration is offset by NEWBINNING/2-OLDBINNING/2
+		of << outputfilename.str() << ":\t" << 0.5*BINNING-0.5 << "\t" << BINNING << endl;
 		of.close();
 
 		cout << "Calibration file " << calibrationfilename << " created." << endl;
@@ -94,7 +94,7 @@ void convertDirectory(TDirectory* f, TString filename,
 int main(int argc, char* argv[]){
 
 	if(argc != 3){
-		cout << "Error: Script needs exactily two arguments. The first is the name of the ROOT file that contains the histograms. The second is the binning factor of the histograms. Aborting ..." << endl;
+		cout << "Error: Script needs exactly two arguments. The first is the name of the ROOT file that contains the histograms. The second is the binning factor of the histograms. Aborting ..." << endl;
 		abort();
 	}
 	TString filename = argv[1];

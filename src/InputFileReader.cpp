@@ -65,24 +65,24 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 	Double_t dist;
 	Int_t best_simulation = 0;
 	Int_t n_energies = (Int_t) energies.size();
-	Int_t simulation_shift = 0;
+	Int_t simulationBin;
+	TAxis* ReMaXAxis = response_matrix.GetXaxis();
+	TAxis* ReMaYAxis = response_matrix.GetYaxis();
 
 	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
 		// Find best simulation for energy bin
 		min_dist = (Double_t) NBINS;
 		best_simulation = 0;
 
-		// Do not calculate the absolute value of dist immediately, because it will be
-		// used later to shift the simulation in the right direction
-		for(Int_t j = 0; j < n_energies; ++j){
-			dist = energies[(long unsigned int) j] - (Double_t) i;
-			if(fabs(dist) < fabs(min_dist)){
+		for(Int_t simNo = 0; simNo < n_energies; ++simNo){
+			dist = fabs(energies[(long unsigned int) simNo] - ReMaXAxis->GetBinCenter(i));
+			if(dist < min_dist){
 				min_dist = dist;
-				best_simulation = j;
+				best_simulation = simNo;
 			}
 		}
 
-		cout << "Bin: " << i << " keV, using " << filenames[(long unsigned int) best_simulation] << " ( " << energies[(long unsigned int) best_simulation] << " )" << endl;
+		cout << "Bin: " << i << " (" << ReMaXAxis->GetBinCenter(i) << " keV), using " << filenames[(long unsigned int) best_simulation] << " (" << energies[(long unsigned int) best_simulation] << " keV)" << endl;
 
 		// Fill row of matrix with best simulation
 		TFile *inputFile = new TFile(filenames[(long unsigned int) best_simulation]);
@@ -95,10 +95,15 @@ void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<
 			abort();
 		}
 
-		simulation_shift = (Int_t) min_dist;	
 		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
-			if(j + simulation_shift < (Int_t) NBINS && (j + simulation_shift) >= 0){
-				response_matrix.SetBinContent(i, j, hist->GetBinContent(j + simulation_shift));
+			simulationBin = hist->FindBin(
+				0.001*( // utr simulations have their axis in MeV
+				energies[(long unsigned int) best_simulation]
+				-ReMaXAxis->GetBinCenter(i)
+				+ReMaYAxis->GetBinCenter(j)
+				));
+			if (1 <= simulationBin && simulationBin <= hist->GetNbinsX()) {
+				response_matrix.SetBinContent(i, j, hist->GetBinContent(simulationBin));
 			}
 		}
 
@@ -252,6 +257,30 @@ void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile
 	inputFile->Close();
 }
 
+const std::string WHITESPACE = " \n\r\t\f\v";
+
+std::string ltrim(const std::string& s) {
+    size_t start = s.find_first_not_of(WHITESPACE);
+    if (start == std::string::npos) {
+        return "";
+    } else {
+        return s.substr(start);
+    }
+}
+
+std::string rtrim(const std::string& s) {
+    size_t end = s.find_last_not_of(WHITESPACE);
+    if (end == std::string::npos) {
+        return "";
+    } else {
+        return s.substr(0, end + 1);
+    }
+}
+
+std::string trim(const std::string& s) {
+    return rtrim(ltrim(s));
+}
+
 void InputFileReader::readTxtSpectrum(TH1F &spectrum, const TString spectrumfile){
 	
 	ifstream file;	
@@ -261,6 +290,8 @@ void InputFileReader::readTxtSpectrum(TH1F &spectrum, const TString spectrumfile
 
 	if(file.is_open()){
 		while(getline(file, line)){
+			if (trim(line).length() == 0 || trim(line).at(0) == '#') // Ignore empty lines or comments
+		        continue;
 			spectrum.SetBinContent(index, atof(line.c_str()));
 			++index;
 		}
