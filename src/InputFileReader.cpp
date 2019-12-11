@@ -18,6 +18,7 @@
 #include <TFile.h>
 #include <TH1.h>
 
+#include <bits/stdc++.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -61,57 +62,96 @@ void InputFileReader::readInputFile(const TString inputfilename, vector<TString>
 void InputFileReader::fillMatrix(const vector<TString> &filenames, const vector<Double_t> &energies, const vector<Double_t> &n_particles, const TString histname, TH2F &response_matrix, TH1F &n_simulated_particles){
 	cout << "> Creating matrix ..." << endl;
 
-	Double_t min_dist = (Double_t) NBINS;
+	Int_t interp1_sim, interp2_sim;
+	Double_t interp1_dist, interp2_dist;
+	Double_t interp1_weight, interp2_weight;
+
 	Double_t dist;
-	Int_t best_simulation = 0;
 	Int_t n_energies = (Int_t) energies.size();
 	Int_t simulationBin;
 	TAxis* ReMaXAxis = response_matrix.GetXaxis();
 	TAxis* ReMaYAxis = response_matrix.GetYaxis();
 
 	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
-		// Find best simulation for energy bin
-		min_dist = (Double_t) NBINS;
-		best_simulation = 0;
+		// Find two reference points for interpolation
+		interp1_sim = 0;
+		interp2_sim = NBINS;
+		interp1_dist = (Double_t) NBINS * -1.;
+		interp2_dist = (Double_t) NBINS;
 
+		// Do not calculate the absolute value of dist immediately, because it will be
+		// used later to shift the simulation in the right direction
 		for(Int_t simNo = 0; simNo < n_energies; ++simNo){
-			dist = fabs(energies[(long unsigned int) simNo] - ReMaXAxis->GetBinCenter(i));
-			if(dist < min_dist){
-				min_dist = dist;
-				best_simulation = simNo;
+			dist = energies[(long unsigned int) simNo] - ReMaXAxis->GetBinCenter(i);
+			if (dist < 0 && dist > interp1_dist) {
+				interp1_sim = simNo;
+				interp1_dist = dist;
+			} else if (dist > 0 && dist < interp2_dist) {
+				interp2_sim = simNo;
+				interp2_dist = dist;
 			}
 		}
 
-		cout << "Bin: " << i << " (" << ReMaXAxis->GetBinCenter(i) << " keV), using " << filenames[(long unsigned int) best_simulation] << " (" << energies[(long unsigned int) best_simulation] << " keV)" << endl;
-
-		// Fill row of matrix with best simulation
-		TFile *inputFile = new TFile(filenames[(long unsigned int) best_simulation]);
-		TH1F *hist = nullptr;
-
-		if(gDirectory->FindKey(histname)){
-			hist = (TH1F*) gDirectory->Get(histname);
-		} else{
-			cout << __FILE__ << ":" << __FUNCTION__ << "():" << __LINE__ << ": Error: No TH1F object called '" << histname << "' found in '" << filenames[(long unsigned int) best_simulation] << "'. Aborting ..." << endl; 
-			abort();
-		}
-
-		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
-			simulationBin = hist->FindBin(
-				0.001*( // utr simulations have their axis in MeV
-				energies[(long unsigned int) best_simulation]
-				-ReMaXAxis->GetBinCenter(i)
-				+ReMaYAxis->GetBinCenter(j)
-				));
-			if (1 <= simulationBin && simulationBin <= hist->GetNbinsX()) {
-				response_matrix.SetBinContent(i, j, hist->GetBinContent(simulationBin));
+		if (interp1_dist == NBINS * -1. || interp2_dist == NBINS || (n_particles[(long unsigned int) interp1_sim] != n_particles[(long unsigned int) interp2_sim]) ) {
+			if (fabs(interp1_dist) > fabs(interp2_dist)) {
+				interp1_sim = interp2_sim;
+				interp1_dist = interp2_dist;
 			}
+
+			printf("Bin: %d (%.1f keV), using %s (%.1f keV).\n", i, ReMaXAxis->GetBinCenter(i),
+				filenames[(long unsigned int) interp1_sim].Data(), energies[(long unsigned int) interp1_sim]);
+
+			fillMatrixWeighted(filenames, energies, n_particles, histname, response_matrix, n_simulated_particles, i, interp1_sim, 1.0);
+		} else {
+			interp1_weight = 1 - fabs(interp1_dist) / (fabs(interp1_dist) + fabs(interp2_dist));
+			interp2_weight = 1 - fabs(interp2_dist) / (fabs(interp1_dist) + fabs(interp2_dist));
+
+			printf("Bin: %d (%.1f keV), using %s (%.1f keV, weight = %.2f) and %s (%.1f keV, weight = %.2f).\n", i, ReMaXAxis->GetBinCenter(i),
+				filenames[(long unsigned int) interp1_sim].Data(), energies[(long unsigned int) interp1_sim], interp1_weight,
+				filenames[(long unsigned int) interp2_sim].Data(), energies[(long unsigned int) interp2_sim], interp2_weight);
+
+			fillMatrixWeighted(filenames, energies, n_particles, histname, response_matrix, n_simulated_particles, i, interp1_sim, interp1_weight);
+			fillMatrixWeighted(filenames, energies, n_particles, histname, response_matrix, n_simulated_particles, i, interp2_sim, interp2_weight);
 		}
 
-		// Fill number of simulated particles into TH1F
-		n_simulated_particles.SetBinContent(i, n_particles[(long unsigned int) best_simulation]);
 
-		inputFile->Close();
+
 	}
+}
+
+void InputFileReader::fillMatrixWeighted(const vector<TString> &filenames, const vector<Double_t> &energies, const vector<Double_t> &n_particles, const TString histname, TH2F &response_matrix, TH1F &n_simulated_particles, Int_t i, Int_t simulation, Double_t weight) {
+	TFile *inputFile = new TFile(filenames[(long unsigned int) simulation]);
+	TH1F *hist = nullptr;
+	Int_t simulationBin;
+
+	TAxis* ReMaXAxis = response_matrix.GetXaxis();
+	TAxis* ReMaYAxis = response_matrix.GetYaxis();
+
+	if(gDirectory->FindKey(histname)){
+		hist = (TH1F*) gDirectory->Get(histname);
+	} else{
+		cout << __FILE__ << ":" << __FUNCTION__ << "():" << __LINE__ << ": Error: No TH1F object called '" << histname << "' found in '" << filenames[(long unsigned int) simulation] << "'. Aborting ..." << endl; 
+		abort();
+	}
+
+	for(Int_t simNo = 1; simNo <= (Int_t) NBINS; ++simNo){
+		simulationBin = hist->FindBin(
+			0.001*( // utr simulations have their axis in MeV
+			energies[(long unsigned int) simulation]
+			-ReMaXAxis->GetBinCenter(i)
+			+ReMaYAxis->GetBinCenter(simNo)
+			));
+		if (1 <= simulationBin && simulationBin <= hist->GetNbinsX()) {
+			response_matrix.SetBinContent(
+				i, simNo,
+				response_matrix.GetBinContent(i, simNo) +
+				weight * hist->GetBinContent(simulationBin));
+		}
+	}
+
+	n_simulated_particles.SetBinContent(i, n_particles[(long unsigned int) simulation]);
+
+	inputFile->Close();
 }
 
 void InputFileReader::updateMatrix(const vector<TString> &old_filenames, const vector<Double_t> &old_energies, const vector<Double_t> &old_n_particles, const TH2F &old_response_matrix, const vector<TString> &new_filenames, const vector<Double_t> &new_energies, const vector<Double_t> &new_n_particles, const TString histname, TH2F &response_matrix, TH1F &n_simulated_particles){
@@ -134,23 +174,23 @@ void InputFileReader::updateMatrix(const vector<TString> &old_filenames, const v
 		best_simulation_old = 0;
 		best_simulation_new = 0;
 
-		for(Int_t j = 0; j < n_energies_old; ++j){
+		for(Int_t simNo = 0; simNo < n_energies_old; ++simNo){
 		// Do not calculate the absolute value of dist immediately, because it will be
 		// used later to shift the simulation in the right direction
-			dist_old = old_energies[(long unsigned int) j] - (Double_t) i;	
+			dist_old = old_energies[(long unsigned int) simNo] - (Double_t) i;	
 			if(fabs(dist_old) < fabs(min_dist_old)){
 				min_dist_old = dist_old;
-				best_simulation_old = j;
+				best_simulation_old = simNo;
 			}
 		}
 
-		for(Int_t j = 0; j < n_energies_new; ++j){
+		for(Int_t simNo = 0; simNo < n_energies_new; ++simNo){
 		// Do not calculate the absolute value of dist immediately, because it will be
 		// used later to shift the simulation in the right direction
-			dist_new = new_energies[(long unsigned int) j] - (Double_t) i;
+			dist_new = new_energies[(long unsigned int) simNo] - (Double_t) i;
 			if(fabs(dist_new) < fabs(min_dist_new)){
 				min_dist_new = dist_new;
-				best_simulation_new = j;
+				best_simulation_new = simNo;
 			}
 		}
 
@@ -169,9 +209,9 @@ void InputFileReader::updateMatrix(const vector<TString> &old_filenames, const v
 			}
 
 			simulation_shift = (Int_t) min_dist_new;	
-			for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
-				if(j + simulation_shift < (Int_t) NBINS && (j + simulation_shift) >= 0){
-					response_matrix.SetBinContent(i, j, hist->GetBinContent(j + simulation_shift));
+			for(Int_t simNo = 1; simNo <= (Int_t) NBINS; ++simNo){
+				if(simNo + simulation_shift < (Int_t) NBINS && (simNo + simulation_shift) >= 0){
+					response_matrix.SetBinContent(i, simNo, hist->GetBinContent(simNo + simulation_shift));
 				}
 			}
 
@@ -184,9 +224,9 @@ void InputFileReader::updateMatrix(const vector<TString> &old_filenames, const v
 			cout << "Bin: " << i << " keV, keep old simulation ( " << old_energies[(long unsigned int) best_simulation_old] << " )" << endl;
 
 			n_simulated_particles.SetBinContent(i, old_n_particles[best_simulation_old]);
-			for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
-				if(j + simulation_shift < (Int_t) NBINS && (j + simulation_shift) >= 0){
-					response_matrix.SetBinContent(i, j, old_response_matrix.GetBinContent(i, j));
+			for(Int_t simNo = 1; simNo <= (Int_t) NBINS; ++simNo){
+				if(simNo + simulation_shift < (Int_t) NBINS && (simNo + simulation_shift) >= 0){
+					response_matrix.SetBinContent(i, simNo, old_response_matrix.GetBinContent(i, simNo));
 				}
 			}
 		}
@@ -216,8 +256,8 @@ void InputFileReader::readMatrix(TH2F &response_matrix, TH1F &n_simulated_partic
 	}
 
 	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
-		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
-			response_matrix.SetBinContent(i, j, rema->GetBinContent(i, j));
+		for(Int_t simNo = 1; simNo <= (Int_t) NBINS; ++simNo){
+			response_matrix.SetBinContent(i, simNo, rema->GetBinContent(i, simNo));
 		}
 	}
 
@@ -249,8 +289,8 @@ void InputFileReader::readMatrix(TH2F &response_matrix, const TString matrixfile
 	}
 
 	for(Int_t i = 1; i <= (Int_t) NBINS; ++i){
-		for(Int_t j = 1; j <= (Int_t) NBINS; ++j){
-			response_matrix.SetBinContent(i, j, rema->GetBinContent(i, j));
+		for(Int_t simNo = 1; simNo <= (Int_t) NBINS; ++simNo){
+			response_matrix.SetBinContent(i, simNo, rema->GetBinContent(i, simNo));
 		}
 	}
 
@@ -317,8 +357,8 @@ void InputFileReader::writeCorrelationMatrix(TMatrixDSym &correlation_matrix, TS
 	Int_t n_rows = correlation_matrix.GetNrows();
 
 	for(Int_t i = 0; i < n_rows; ++i){
-		for(Int_t j = 0; j < n_rows; ++j){
-			outputfile << correlation_matrix(i,j) << "\t";
+		for(Int_t simNo = 0; simNo < n_rows; ++simNo){
+			outputfile << correlation_matrix(i,simNo) << "\t";
 		}
 		outputfile << "\n";
 	}
