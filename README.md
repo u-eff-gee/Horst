@@ -69,11 +69,11 @@ The default value is 12000. This value should match the number of bins of the re
 After that, compile and install the code in the build directory by executing
 
 ```
-$ make
-$ make install
+$ cmake --build .
+$ cmake --build . --target install
 ```
 
-The `make` step should create five executable binaries:
+The `cmake --build .` step should create five executable binaries:
 
  * `horst`: The executable of the main program
  * `tsroh`: A tool that does the opposite of `Horst`, distorting a spectrum with a simulated detector response
@@ -81,14 +81,14 @@ The `make` step should create five executable binaries:
  * `convert_to_txt`: A tool to convert the ROOT output file to text files
  * `create_test_data`: A driver to generate artificial spectra and response matrices for unit testing
 
-The Makefile also supports the command `make clean` to remove all files which were created in the compilation step.
+You can use the `clean` target (i.e., `cmake --build . --target clean`) to remove all files which were created in the compilation step.
 
 ### 3.1 Testing <a name="testing"></a>
 
 After completing the steps above, a self-test of the code can be run by executing
 
 ```
-make test
+$ cmake --build . --target test
 ```
 
 in the build directory. This will run `horst` with selected examples, trying to use all of its functionality. The tests will report on their success or failure and create the usual `horst` output.
