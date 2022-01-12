@@ -250,9 +250,9 @@ For more information about the output, refer to the [documentation](#documentati
 
 ## 6 License <a name="license"></a>
 
-Copyright (C) 2018
+Copyright (C) 2018-2022
 
-U. Gayer (gayer.udo@gmail.com)
+U. Friman-Gayer (udo.friman-gayer@duke.edu)
 
 This code is distributed under the terms of the GNU General Public License. See the COPYING file for more information.
 

@@ -18,7 +18,6 @@
 #include <TFile.h>
 #include <TH1.h>
 
-#include <bits/stdc++.h>
 #include <iostream>
 #include <fstream>
 #include <string>
