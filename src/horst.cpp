@@ -82,7 +82,7 @@ static struct argp_option options[] = {
 	{"interactive_mode", 'i', 0, 0, "Interactive mode: show results in ROOT application (default: false).", 0},
 	{"tfile", 't', "SPECTRUM", 0, "Select SPECTRUM from a ROOT file called INPUTFILENAME, instead of a text file."
 	" Spectrum must be an object of TH1F. (default: none, i.e. don't read from ROOT file)", 0},
-	{"topdown_only", 'T', 0, 0, "Do not fit, just run the TopDown algorithm (default: false).", 0},
+	{"topdown_only", 'T', 0, 0, "Do not fit, just run the TopDown algorithm (default: false). This will put the TopDown-unfolded spectra into the top-level directory of the ROOT output file, and create an additional 2D matrix that contains the intermediate spectra at each step of the algorithms procedure.", 0},
 	{"correlation", 'c', "CORRELATIONFILENAME", 0, "Write the correlation matrix of the fit to the specified output file. If the '-u' option is used, only one correlation matrix will be written, although NRANDOM fits are executed. (default: none, i.e. do not write write correlation file)", 0},
 	{"seed", 's', "SEED", 0, "Set the random number seed (default: 1. This ensures that a call of Horst with the same arguments gives the same results.)", 0},
 	{"verbose", 'v', 0, 0, "Enable ROOT to print verbose information about the fitting process (default: false)", 0},
@@ -172,7 +172,8 @@ int main(int argc, char* argv[]){
 	TH1F topdown_spectrum_uncertainty("topdown_spectrum_uncertainty", "TopDown Spectrum Uncertainty", nbins, 0., max_bin); 
 	TH1F topdown_total_uncertainty("topdown_total_uncertainty", "TopDown Total Uncertainty", nbins, 0., max_bin);
 	TH1F topdown_FEP("topdown_FEP", "TopDown FEP", nbins, 0., max_bin); 
-	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed", nbins, 0., max_bin); 
+	TH1F topdown_spectrum_reconstructed("topdown_spectrum_reconstructed", "TopDown Spectrum Reconstructed", nbins, 0., max_bin);
+	TH2F topdown_steps("topdown_steps", "topdown_steps", nbins, 0., max_bin, nbins, 0., max_bin);
 
 	// Fit
 	TH1F fit_params("fit_params", "Fit Parameters", nbins, 0., max_bin);
@@ -251,7 +252,11 @@ int main(int argc, char* argv[]){
 	/************ Use Top-Down unfolding to get start parameters *************/
 
 	cout << "> Unfold spectrum using top-down algorithm ..." << endl;
-	fitter.topdown(spectrum, response_matrix, topdown_params, binstart, binstop);
+	if(arguments.topdown_only){
+		fitter.topdown(spectrum, response_matrix, topdown_params, binstart, binstop, topdown_steps);
+	} else {
+		fitter.topdown(spectrum, response_matrix, topdown_params, binstart, binstop);
+	}
 
 	fitter.fittedFEP(topdown_params, response_matrix, topdown_FEP);
 	fitter.fittedSpectrum(topdown_params, response_matrix, topdown_fit);
@@ -506,8 +511,10 @@ int main(int argc, char* argv[]){
 	}
 
 	// Write TopDown results
-	TDirectory *td_topdown = outputfile->mkdir("topdown");
-	td_topdown->cd();
+	if(!arguments.topdown_only){
+		TDirectory *td_topdown = outputfile->mkdir("topdown");
+		td_topdown->cd();
+	}
 
 	topdown_params.Write();
 	topdown_FEP.Write();
@@ -516,6 +523,9 @@ int main(int argc, char* argv[]){
 	topdown_spectrum_uncertainty.Write();
 	topdown_total_uncertainty.Write();
 	topdown_spectrum_reconstructed.Write();
+	if(arguments.topdown_only){
+		topdown_steps.Write();
+	}
 	outputfile->cd();
 
 	// Write fit results

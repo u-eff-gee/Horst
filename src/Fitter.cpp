@@ -47,6 +47,30 @@ void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t
 	}
 }
 
+void Fitter::topdown(const TH1F &spectrum, const TH2F &rema, TH1F &params, Int_t binstart, Int_t binstop, TH2F &topdown_steps){
+
+	TH1F topdown_unfolded_spectrum("topdown_unfolded_spectrum", "Unfolded_Spectrum_TopDown", (Int_t) NBINS/ (Int_t) BINNING, 0., (Double_t) NBINS - 1);
+
+	Double_t parameter = 0.;
+	for(Int_t i = 0; i <= (Int_t) NBINS/((Int_t) BINNING); ++i){
+		topdown_unfolded_spectrum.SetBinContent(i, spectrum.GetBinContent(i));
+		params.SetBinContent(i, 0.);
+	}
+
+	for(Int_t i = binstop; i >= binstart; --i){
+		parameter = topdown_unfolded_spectrum.GetBinContent(i)/rema.GetBinContent(i, i);
+		params.SetBinContent(i, parameter);
+
+		for(Int_t j = binstop - 1; j >= 0; --j){
+			topdown_unfolded_spectrum.SetBinContent(j, topdown_unfolded_spectrum.GetBinContent(j) - parameter*rema.GetBinContent(i, j));
+		}
+
+		for(Int_t j = binstop; j >= binstart; --j){
+			topdown_steps.SetBinContent(i, j, topdown_unfolded_spectrum.GetBinContent(j));
+		}
+	}
+}
+
 void Fitter::fit(TH1F &spectrum, const TH2F &rema, const TH1F &start_params, TH1F &params, TH1F &fit_uncertainty, Int_t binstart, Int_t binstop, const Bool_t verbose, const Bool_t correlation, TMatrixDSym &correlation_matrix){
 
 	fitFunction.setResponseMatrix(rema);

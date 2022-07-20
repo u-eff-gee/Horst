@@ -31,10 +31,10 @@ In particle detection experiments, the real particle spectrum will be distorted 
 
 ## 2 Prerequisites <a name="prerequisites"></a>
 
-* [CMake](https://cmake.org/) (> 3.9)
+* [CMake](https://cmake.org/) (>= 3.9)
 * C++11 (minimum)
 * [ROOT 6](https://root.cern.ch/)
-* LaTeX (to build the documentation)
+* [LaTeX](https://www.latex-project.org/) (to build the documentation)
 
 ## 3 Installation <a name="installation"></a>
 
@@ -140,6 +140,7 @@ There are more options available that:
  * create interactive plots
  * set the name of the output file
  * write the correlation matrix of the fit
+ * run only the TopDown procedure, and not the fit
  * change the verbosity of `horst`
 
 To see a short description of the options, type
